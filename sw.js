@@ -1,5 +1,5 @@
 // Offline-capable shell: serve the app from cache when the network is gone, refresh it in the background otherwise.
-const C = 'vocal-studio-v1';
+const C = 'vocal-studio-v2';
 self.addEventListener('install', (e) => { e.waitUntil(caches.open(C).then((c) => c.addAll(['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png'])).then(() => self.skipWaiting())); });
 self.addEventListener('activate', (e) => { e.waitUntil(caches.keys().then((ks) => Promise.all(ks.filter((k) => k !== C).map((k) => caches.delete(k)))).then(() => self.clients.claim())); });
 self.addEventListener('fetch', (e) => {

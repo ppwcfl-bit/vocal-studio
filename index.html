@@ -795,6 +795,64 @@ input[type=range] { height: 32px; }
 @media (orientation: landscape) and (max-height: 540px) { .studio { height: calc(100dvh - 34px); } .studio .stage { height: 56px; } .studio .chips-row { display: none; } }
 .np-lines p.on span { color: rgba(255,255,255,.95); }
 .np.playing .np-lines p.on span { color: rgba(255,255,255,.5); } .np.playing .np-lines p.on span.now { color: #fff; }
+
+/* ===== focus: Singing / Guitar / Both ===== */
+:root[data-focus="guitar"] { --accent: #FF9F0A; --accent-deep: #E08600; --accent-soft: rgba(255,159,10,.16); }
+:root[data-focus="guitar"][data-theme="light"] { --accent: #E07800; --accent-deep: #C46800; --accent-soft: rgba(224,120,0,.12); }
+.focusbar { display: flex; align-items: center; gap: 6px; padding: 4px; margin: 6px 0 14px; background: var(--panel); border-radius: 14px; width: 100%; max-width: 520px; }
+.focusbar .fb-l { font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); padding: 0 8px 0 6px; }
+.focusbar button { flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 40px; border: 0; border-radius: 10px; background: transparent; color: var(--text); font-weight: 600; font-size: 15px; }
+.focusbar button svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.8; }
+.focusbar button[aria-checked="true"] { background: var(--accent); color: #fff; }
+.focusbar.dark { background: rgba(255,255,255,.1); margin: 10px auto 0; max-width: 760px; } .focusbar.dark .fb-l { color: rgba(255,255,255,.6); } .focusbar.dark button { color: #fff; }
+.today { background: var(--panel); border-radius: 16px; padding: 14px; margin-bottom: 18px; }
+.today-h { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-bottom: 8px; } .today-h b { font-size: 18px; } .today-h small { color: var(--muted); font-size: 13px; }
+.today-steps { display: grid; gap: 8px; } @media (min-width: 760px) { .today-steps { grid-template-columns: repeat(3, 1fr); } }
+.tstep { display: flex; align-items: center; gap: 12px; text-align: left; padding: 12px; border: 0; border-radius: 12px; background: var(--panel-2, rgba(127,127,127,.12)); color: var(--text); min-height: 60px; }
+.tstep .tn { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; background: var(--accent); color: #fff; font-weight: 700; flex: none; }
+.tstep .st { flex: 1; display: flex; flex-direction: column; } .tstep .st small { color: var(--muted); font-size: 13px; }
+.tstep > svg { width: 20px; height: 20px; color: var(--accent); fill: none; stroke: currentColor; stroke-width: 1.8; flex: none; }
+.helpbtn { width: 34px; height: 34px; border-radius: 50%; border: 0; background: var(--panel); color: var(--accent); font-weight: 800; font-size: 17px; margin-left: auto; margin-right: 8px; }
+header.lt { display: flex; align-items: center; }
+/* walkthrough */
+.tour { min-height: 260px; display: flex; flex-direction: column; gap: 10px; } .tour h3 { font-size: 24px; }
+.tour-pick { display: grid; gap: 8px; } .tp { display: grid; grid-template-columns: 34px 1fr; grid-template-rows: auto auto; column-gap: 12px; text-align: left; align-items: center; padding: 14px; border-radius: 14px; border: 2px solid transparent; background: var(--panel-2, rgba(127,127,127,.12)); color: var(--text); }
+.tp svg { grid-row: span 2; width: 28px; height: 28px; fill: none; stroke: var(--accent); stroke-width: 1.8; } .tp small { color: var(--muted); } .tp.on { border-color: var(--accent); }
+.tour-out { font-size: 14px; line-height: 1.5; min-height: 40px; } .tour-nav { justify-content: space-between; align-items: center; margin-top: 8px; }
+.dots { display: flex; gap: 6px; } .dots i { width: 7px; height: 7px; border-radius: 50%; background: var(--faint, rgba(127,127,127,.4)); } .dots i.on { background: var(--accent); }
+.how { display: grid; gap: 12px; padding-left: 0; list-style: none; counter-reset: h; } .how li { display: grid; grid-template-columns: 30px 1fr; column-gap: 10px; counter-increment: h; }
+.how li::before { content: counter(h); grid-row: span 2; width: 26px; height: 26px; border-radius: 50%; background: var(--accent); color: #fff; display: grid; place-items: center; font-weight: 700; font-size: 14px; }
+.how span { color: var(--muted); font-size: 14px; }
+.meter { height: 12px; border-radius: 6px; background: var(--panel-2, rgba(127,127,127,.2)); overflow: hidden; margin-bottom: 6px; } .meter i { display: block; height: 100%; width: 0; background: var(--ok, #30D158); transition: width .08s; }
+/* the instructor's face */
+.studio .stage { height: clamp(230px, 38vh, 360px); }
+.avatar-wrap { position: relative; width: min(230px, 50vw, 30vh); aspect-ratio: 240 / 260; z-index: 1; filter: drop-shadow(0 18px 30px rgba(0,0,0,.45)); }
+.avatar-wrap svg { width: 100%; height: 100%; display: block; overflow: visible; }
+.studio .state-label { position: absolute; bottom: 6px; left: 50%; transform: translateX(-50%); z-index: 2; background: rgba(0,0,0,.45); padding: 4px 12px; border-radius: 999px; font-size: 13px; }
+.startgate { position: absolute; inset: auto 50% -6px auto; transform: translateX(50%); z-index: 3; display: flex; align-items: center; gap: 12px; padding: 14px 22px; border: 0; border-radius: 999px; background: var(--accent); color: #fff; box-shadow: 0 12px 30px rgba(0,0,0,.4); animation: micp 1.8s infinite; text-align: left; }
+.startgate svg { width: 22px; height: 22px; fill: currentColor; } .startgate span { display: flex; flex-direction: column; } .startgate b { font-size: 17px; white-space: nowrap; } .startgate small { opacity: .85; font-size: 13px; }
+.link.light { color: #fff; text-decoration: underline; background: none; border: 0; padding: 0; font: inherit; }
+/* Now Playing guidance + Apple Music */
+.np-help { font-size: 14px; color: rgba(255,255,255,.75); text-align: center; margin: 4px 0 0; line-height: 1.45; }
+.np-apple { display: flex; justify-content: center; }
+.applem { text-decoration: none; }
+.howto { display: flex; gap: 8px; align-items: center; color: var(--muted); font-size: 14px; margin: 4px 0 8px; } .howto svg { width: 14px; height: 14px; flex: none; stroke: var(--accent); fill: none; stroke-width: 2; }
+/* Make it yours */
+.miy-l { display: grid; gap: 10px; } @media (min-width: 760px) { .miy-l { grid-template-columns: 1fr 1fr; } }
+.miy-i { background: var(--panel); border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 6px; align-items: flex-start; } .miy-i span { color: var(--muted); font-size: 14px; line-height: 1.45; }
+/* Break down a song */
+.bd-cta { display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; padding: 14px; border: 0; border-radius: 14px; background: var(--panel); color: var(--text); margin-bottom: 16px; }
+.bd-cta span:nth-child(2) { flex: 1; display: flex; flex-direction: column; } .bd-cta small { color: var(--muted); font-size: 13px; } .bd-cta > svg { width: 16px; height: 16px; }
+.bd-prog { display: flex; align-items: center; gap: 12px; padding: 16px; background: var(--panel); border-radius: 14px; margin-top: 12px; } .bd-prog span { flex: 1; }
+.spinner { width: 22px; height: 22px; border-radius: 50%; border: 3px solid var(--panel-2, rgba(127,127,127,.3)); border-top-color: var(--accent); animation: spin 0.9s linear infinite; flex: none; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.rec-dot { width: 14px; height: 14px; border-radius: 50%; background: #FF3B30; animation: pulse 1s infinite; flex: none; }
+.bd-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; } .bd-stats div { background: var(--panel-2, rgba(127,127,127,.12)); border-radius: 12px; padding: 10px; display: flex; flex-direction: column; } .bd-stats b { font-size: 17px; } .bd-stats span { color: var(--muted); font-size: 12px; }
+@media (max-width: 420px) { .bd-stats { grid-template-columns: 1fr 1fr; } }
+.bdc { border: 0; background: none; color: inherit; padding: 0; } .bdc b { text-decoration: underline dotted; text-underline-offset: 4px; }
+.bd-pick { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0 14px; } .bd-pick .on { background: var(--accent); color: #fff; }
+.bd-res { margin-top: 12px; } .bd-in label.grow { cursor: pointer; }
+.np-apple { flex-wrap: wrap; gap: 8px; } .hp-t { color: #fff; background: rgba(255,255,255,.14); text-align: left; } .hp-t[aria-pressed="true"] { background: color-mix(in srgb, var(--accent) 60%, transparent); }
 </style>
 <div class="app">
   <nav class="tabs" id="tabs" aria-label="Main">
@@ -1294,7 +1352,7 @@ const Engine = {
 
   async ensure() {
     if (!this.ctx) {
-      try { if (navigator.audioSession) navigator.audioSession.type = 'play-and-record'; } catch (e) {}
+      try { if (navigator.audioSession) navigator.audioSession.type = this.micOn ? 'play-and-record' : 'playback'; } catch (e) {}
       const AC = window.AudioContext || window.webkitAudioContext;
       if (!AC) throw new Error('This browser has no Web Audio support.');
       this.ctx = new AC({ latencyHint: 'interactive' });
@@ -1312,6 +1370,7 @@ const Engine = {
     if (this.micOn) return;
     if (!window.isSecureContext) throw Object.assign(new Error('insecure'), { name: 'InsecureContext' });
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) throw Object.assign(new Error('nomedia'), { name: 'NoMediaDevices' });
+    try { if (navigator.audioSession) navigator.audioSession.type = 'play-and-record'; } catch (e) {}
     this.stream = await navigator.mediaDevices.getUserMedia({
       audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false, channelCount: 1 },
     });
@@ -1359,6 +1418,7 @@ const Engine = {
     this._an = null;
     if (this.stream) this.stream.getTracks().forEach((t) => t.stop());
     this.stream = null; this.node = null; this.micOn = false; this.recording = false;
+    try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) {}
     this.releaseWake();
   },
 
@@ -3365,7 +3425,8 @@ const Say = {
       u.rate = Store.data.profile.coachRate || 1.0; u.pitch = 1; u.volume = 1;
       let done = false;
       const finish = () => { if (done) return; done = true; clearTimeout(to); clearInterval(this._ka); this._set(false); resolve(); };
-      u.onend = finish; u.onerror = finish;
+      u.onend = finish; u.onerror = (ev) => { this.lastError = ev && ev.error; finish(); }; u.onstart = () => { this.lastError = null; };
+      u.onboundary = () => { try { if (typeof avatarKick === 'function') avatarKick(); } catch (e) {} };
       const to = setTimeout(finish, 2500 + clean.length * 95);
       this._set(true);
       speechSynthesis.speak(u);
@@ -7274,6 +7335,7 @@ function applyTheme() {
 function boot() {
   Store.load();
   applyTheme();
+  document.documentElement.dataset.focus = focus();
   $('#tabs').addEventListener('click', (e) => { const b = e.target.closest('[data-go]'); if (b) { App.lesson = null; go(b.dataset.go); } });
   const ss = $('#sidesearch'); if (ss) { ss.addEventListener('submit', (e) => { e.preventDefault(); go('songs', { q: ss.querySelector('input').value }); }); ss.querySelector('input').addEventListener('input', (e) => { if (App.view !== 'songs') go('songs', { q: e.target.value }); }); }
   window.addEventListener('hashchange', () => { const h = location.hash.slice(1); if (TABS.includes(h) && h !== App.view && !(PARENT[App.view] === h)) go(h); });
@@ -7412,7 +7474,7 @@ VIEWS.welcome = (el) => {
     const m = e.target.closest('[data-m]'); if (m) { mode = m.dataset.m; $$('#wm button', el).forEach((x) => x.setAttribute('aria-pressed', x === m)); }
     const l = e.target.closest('[data-l]'); if (l) { p.level = l.dataset.l; $$('#wl button', el).forEach((x) => x.setAttribute('aria-pressed', x === l)); Store.save(); }
   });
-  $('#wgo', el).addEventListener('click', () => { p.songFirst = true; p.level = p.level || 'Beginner'; songState(pick).mode = mode; Store.save(); go('track', { id: pick, intro: true }); });
+  $('#wgo', el).addEventListener('click', () => { p.songFirst = true; setFocus(mode, true); p.level = p.level || 'Beginner'; songState(pick).mode = mode; Store.save(); go('track', { id: pick, intro: true }); });
   $('#wskip', el).addEventListener('click', () => { p.songFirst = true; Store.save(); go('home'); });
 };
 
@@ -8013,6 +8075,8 @@ VIEWS.player = (el, params) => {
   const st = songState(song.id), arr = arrOf(song);
   let mode = params.mode || 'listen';
   let secIdx = clamp(params.sec || 0, 0, song.sections.length - 1), tempo = st.tempo || (mode === 'listen' ? 100 : 80);
+  if (song.audio) tempo = 100; // the original recording plays at its own speed
+  const orig = (sid) => song.audio && song.secStart && song.secStart[sid] != null;
   let playing = false, stopFn = null, lyrics = false;
   const capo = () => arr.capo + (st.shift || 0);
   const sec = () => song.sections[secIdx];
@@ -8060,7 +8124,8 @@ VIEWS.player = (el, params) => {
   const listen = async () => {
     await Engine.ensure(); Engine.stopAll();
     const T = timeline(), total = T[T.length - 1].t + T[T.length - 1].dur, t0 = Engine.ctx.currentTime + 0.15;
-    T.forEach((c) => { for (let k = 0; k < 4; k++) spPlayChord(c.shape, capo(), t0 + c.t + k * spb(), spb() * 1.6); });
+    if (orig(sec().id)) SongAudio.play(song.id, t0, song.secStart[sec().id], total);
+    else T.forEach((c) => { for (let k = 0; k < 4; k++) spPlayChord(c.shape, capo(), t0 + c.t + k * spb(), spb() * 1.6); });
     playing = true; el.querySelector('.np').classList.add('playing'); head();
     const unf = follow(t0, T, total);
     const to = setTimeout(() => { unf(); if (secIdx < song.sections.length - 1) { secIdx++; stopFn = null; playing = false; listen(); } else stop(); }, (total + 0.3) * 1000);
@@ -8079,7 +8144,7 @@ VIEWS.player = (el, params) => {
     let unf = () => {};
     try {
       const out = await gRun({ bpm, beats: Math.ceil(T.total / T.spb), countIn: 4, clicks: !(hp && x.voice && !x.guitar), sig,
-        accompany: (t0) => { if (hp && !x.guitar) T.chords.forEach((c) => { for (let k = 0; k < Math.round(c.dur / T.spb); k++) spPlayChord(c.shape, plan.best.capo, t0 + c.t + k * T.spb, T.spb * 1.4); }); },
+        accompany: (t0) => { if (hp && orig(sec().id)) { SongAudio.play(song.id, t0, song.secStart[sec().id], T.total); return; } if (hp && !x.guitar) T.chords.forEach((c) => { for (let k = 0; k < Math.round(c.dur / T.spb); k++) spPlayChord(c.shape, plan.best.capo, t0 + c.t + k * T.spb, T.spb * 1.4); }); },
         onStart: (t0) => { unf = follow(t0, timeline(), T.total); },
         status: (k, n) => { $('#npmode', el).textContent = k === 'count' ? `Starting in ${n}` : together ? 'Play and sing' : x.voice ? 'Sing' : 'Strum'; } });
       unf(); Engine.stopMic();
@@ -8269,6 +8334,9 @@ function rememberCue(id) { const m = instrMem(); m.lastCues = (m.lastCues || [])
 //  - Without it, a built-in teaching library answers the common questions, and listening/feedback still work.
 
 const KB = [
+  { re: /my own|own (style|spin|version|sound)|unique|sound like me|not (sound|sing) like|make it mine|my spin|personal/, topic: 'own',
+    say: 'Good: the goal is your version, not a copy. Start with the key: put the song where your voice sounds best, not where the record is. Then make choices on purpose. Phrasing: start a line a little late, or hold a word longer than the record does. Dynamics: sing one verse almost conversationally and save your full voice for the last chorus. Rhythm: try a different strum, or half-time in the verses. Ornaments: decide where you want a straight note and where you want vibrato or a slide. Record two different versions and keep what feels like you.',
+    follow: 'Want me to find the key that fits your voice first?' },
   { re: /^(?=.*\b(high|higher|top|up)\b)(?=.*\b(different|change|changes|crack|cracks|break|breaks|flip|flips|thin|strain)\b)|\bcrack|\bbreak(s|ing)?\b|passaggio|register/, topic: 'registers',
     say: 'As you go higher, your vocal folds stretch and thin out. Low notes use thicker folds, which we feel as “chest voice”; high notes use thinner folds, “head voice”. The change you hear is the balance shifting, and a crack is that shift happening suddenly. Training doesn’t remove the change, it smooths it. Gliding through it lightly on a lip trill or an “ng” lets the folds adjust gradually instead of pushing the heavy setting too high. Listen to this siren, then try one with me.',
     demo: 'siren', ex: 'transition', follow: 'Want to try a siren while I listen?' },
@@ -8319,6 +8387,7 @@ VIEWS.instructor = (el, params) => {
       <span class="row" style="gap:8px">${song ? `<button class="chip glass" data-song>${artSVG(song, 'thumb tiny')}${esc(song.title)}</button>` : ''}<button class="chip glass hf-toggle" data-hf aria-pressed="${!!Store.data.profile.coachHandsFree}">Hands-free</button><button class="chip glass" data-log>Log</button></span></header>
     <div class="stage">
       <canvas id="viz" aria-hidden="true"></canvas>
+      <div class="avatar-wrap" aria-hidden="true">${avatarSVG()}</div>
       <div class="state-label" id="slabel" role="status" aria-live="polite">Ready</div>
     </div>
     <div class="convo" id="convo" aria-live="polite"></div>
@@ -8336,6 +8405,8 @@ VIEWS.instructor = (el, params) => {
     </footer></section>`;
   renderConvo();
   startViz(el);
+  startAvatar(el);
+  focusInstructor(el, song);
   const sug = song ? [`Why does ${song.title} sound good?`, 'Listen to me sing', 'My chord changes are slow', 'Is this key right for me?'] : ['Why does my voice change when I go higher?', 'How do I make my voice sound fuller?', 'Help me keep rhythm', 'I want to learn a song'];
   suggest(sug);
   const greetLocal = () => {
@@ -8350,10 +8421,12 @@ VIEWS.instructor = (el, params) => {
     INSTR.ai = ai;
     const freshSession = !INSTR.turns.length || (instrMem().lastOpen || 0) < Date.now() - 3 * 36e5 || params.take;
     instrMem().lastOpen = Date.now(); Store.save();
-    $('#foot', el).innerHTML = `${ai ? '<span class="dot ok"></span>AI teacher connected' : '<span class="dot"></span>Built-in teacher (connect AI in Settings for open conversation)'} · ${Voice.dict ? 'dictation on' : Hear.supported() ? 'voice input on' : 'type to talk'} · ${Store.data.profile.coachMuted ? 'speech muted' : Voice.name()}`;
+    $('#foot', el).innerHTML = `${ai ? '<span class="dot ok"></span>AI teacher connected' : '<span class="dot"></span>Built-in teacher · <button class="link light" data-v-ai>Connect the AI for real conversation</button>'} · ${Voice.dict ? 'dictation on' : Hear.supported() ? 'voice input on' : 'type to talk'} · ${Store.data.profile.coachMuted ? 'speech muted' : Voice.name()}`;
     const hf = $('[data-hf]', el); if (hf && !Hear.supported()) hf.hidden = true;
     INSTR.hands = !!Store.data.profile.coachHandsFree;
-    if (freshSession) { if (ai && !params.take) aiTurn(0, true); else iSay(greetLocal()); }
+    const greet = () => { if (ai && !params.take) aiTurn(0, true); else iSay(greetLocal()); };
+    if (freshSession) { if (AudioUnlock.done) greet(); else startGate(el, greet); }
+    else if (!AudioUnlock.done) startGate(el, () => {});
   });
   $('#form', el).addEventListener('submit', (e) => { e.preventDefault(); const t = $('#txt', el).value.trim(); if (!t) return; $('#txt', el).value = ''; userSays(t); });
   $('#mic', el).addEventListener('click', () => listenForSpeech());
@@ -8364,6 +8437,7 @@ VIEWS.instructor = (el, params) => {
     if (b.dataset.act) return doAction(JSON.parse(b.dataset.act), true);
     if (b.matches('[data-song]')) return go('track', { id: song.id });
     if (b.matches('[data-log]')) return exportLog();
+    if (b.matches('[data-v-ai]')) return go('profile');
     if (b.matches('[data-hf]')) { const p = Store.data.profile; p.coachHandsFree = !p.coachHandsFree; INSTR.hands = p.coachHandsFree; Store.save(); b.setAttribute('aria-pressed', p.coachHandsFree); toast(p.coachHandsFree ? 'Hands-free: after I speak, I listen for your answer. Say “again” to retry.' : 'Tap the mic to answer.'); if (p.coachHandsFree && INSTR.state === 'idle') listenForSpeech(true); return; }
   });
   el.addEventListener('change', (e) => { const inp = e.target.closest('[data-up]'); const pu = INSTR.pendingUpload; if (inp && pu && inp.dataset.up === pu.id && inp.files[0]) { INSTR.pendingUpload = null; pushTurn({ who: 'you', text: 'Sent a recording: ' + inp.files[0].name }); pu.resolve(inp.files[0]); } });
@@ -8507,6 +8581,7 @@ function relevantCues() {
   return CUES.filter((c) => issues.has(c.issue)).slice(0, 12).map((c) => ({ id: c.id, forIssue: c.issue, feel: c.feel, listenFor: c.listen, avoid: c.avoid, image: c.image, exercise: c.ex || null, demo: c.demo || null }));
 }
 const PLAYBOOK = `HOW YOU TEACH (follow this every turn):
+0. MAKE IT THEIRS. Never grade or coach the student toward sounding like the original artist. The goal is their own version: a key that suits their range, their natural tone, and their own choices of phrasing, dynamics, rhythm and strumming. Measure technique (tuning, steadiness, timing, clean chords); treat style as the student's choice and help them make it on purpose.
 1. ONE focus at a time. In a practice loop every reply gives (a) the one thing to pay attention to, phrased as something to FEEL, LISTEN FOR or IMAGINE, (b) why, in one plain sentence, and (c) an invitation to try it now, usually with an ACTION so the app listens.
 2. After a MEASUREMENT: first what genuinely went well or improved, with the number (compare with previousAttempt when present: say "closer", "same", "a bit further" honestly); then the single most important fix; then the cue for the next try; then ask them to go again with an ACTION. Never more than one correction per turn. No generic praise.
 3. Use the CUES below when they fit the measured issue. Say them in your own words, briefly. If cueResults shows a cue did not help this student, pick a different one. Put the cue id you are using in the ACTION as "cue".
@@ -8911,6 +8986,580 @@ const takeBtn = () => `<button class="btn small" data-take>${icon('play')}Hear m
 if ('serviceWorker' in navigator && location.protocol === 'https:' && !/claudeusercontent|claude\.ai/.test(location.host)) {
   window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(() => {}); });
 }
+
+// ===================== Focus (Singing / Guitar / Both), sound that works on phones, the talking instructor, and guidance =====================
+
+// ---------- Today's focus: one switch that turns the whole app into a singing app, a guitar app, or both ----------
+const FOCI = { sing: { name: 'Singing', icon: 'mic' }, guitar: { name: 'Guitar', icon: 'guitar' }, both: { name: 'Both', icon: 'wave' } };
+function focus() { const f = Store.data && Store.data.profile && Store.data.profile.focus; return FOCI[f] ? f : 'both'; }
+function setFocus(f, quiet) {
+  if (!FOCI[f]) return;
+  Store.data.profile.focus = f; Store.save();
+  document.documentElement.dataset.focus = f;
+  if (!quiet) { toast(f === 'both' ? 'Singing and guitar together' : FOCI[f].name + ' only. Switch any time at the top.'); go(App.view, App.params); }
+}
+const songMode = (f) => (f === 'sing' ? 'sing' : f === 'guitar' ? 'guitar' : 'both');
+function focusBar(extra) {
+  const f = focus();
+  return `<div class="focusbar ${extra || ''}" role="radiogroup" aria-label="What are you practising today?"><span class="fb-l">Today</span>${Object.entries(FOCI).map(([k, v]) => `<button data-focus="${k}" role="radio" aria-checked="${f === k}">${icon(v.icon)}${v.name}</button>`).join('')}</div>`;
+}
+document.addEventListener('click', (e) => {
+  const b = e.target.closest('button[data-focus]'); if (!b) return;
+  e.preventDefault(); e.stopPropagation(); setFocus(b.dataset.focus);
+}, true);
+
+// Apple Music: hear the real recording. A link opens the song in Apple Music (no account or setup needed here).
+const appleMusicURL = (s) => 'https://music.apple.com/us/search?term=' + encodeURIComponent(s.title + ' ' + s.artist);
+const appleBtn = (s, cls) => `<a class="pill ${cls || ''} applem" href="${appleMusicURL(s)}" target="_blank" rel="noopener">${icon('play')}Hear it on Apple Music</a>`;
+
+// ---------- Sound on phones ----------
+// iPhones mute web audio with the silent switch, block speech that isn't started by a tap, and send sound to the quiet
+// earpiece while the mic is on. Unlock on the first tap; play through the speaker whenever we're not recording.
+function silentWav() {
+  const n = 4000, b = new Uint8Array(44 + n), v = new DataView(b.buffer), w = (o, s) => [...s].forEach((c, i) => (b[o + i] = c.charCodeAt(0)));
+  w(0, 'RIFF'); v.setUint32(4, 36 + n, true); w(8, 'WAVEfmt '); v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+  v.setUint32(24, 8000, true); v.setUint32(28, 8000, true); v.setUint16(32, 1, true); v.setUint16(34, 8, true); w(36, 'data'); v.setUint32(40, n, true);
+  b.fill(128, 44);
+  let s = ''; b.forEach((x) => (s += String.fromCharCode(x))); return 'data:audio/wav;base64,' + btoa(s);
+}
+const AudioUnlock = {
+  done: false, el: null, spoke: false,
+  run() {
+    try { Engine.ensure().catch(() => {}); } catch (e) {}
+    if (!navigator.audioSession) { // older iPhones: a playing media element moves web audio off the ringer channel
+      try { if (!this.el) { this.el = new Audio(silentWav()); this.el.setAttribute('playsinline', ''); this.el.loop = true; this.el.volume = 0.01; } this.el.play().catch(() => {}); } catch (e) {}
+    }
+    if (!this.spoke && 'speechSynthesis' in window) { try { const u = new SpeechSynthesisUtterance(' '); u.volume = 0; speechSynthesis.speak(u); this.spoke = true; } catch (e) {} }
+    this.done = true;
+  },
+};
+['pointerdown', 'touchend', 'keydown'].forEach((ev) => document.addEventListener(ev, () => { if (!AudioUnlock.done || (Engine.ctx && Engine.ctx.state !== 'running')) AudioUnlock.run(); }, { capture: true, passive: true }));
+
+async function soundCheck(out) {
+  AudioUnlock.run();
+  await Engine.ensure();
+  const t = Engine.ctx.currentTime + 0.08;
+  spPlayChord('G', 0, t, 1.8); spPlayChord('C', 0, t + 0.9, 1.8); spPlayChord('G', 0, t + 1.8, 2.4);
+  if (out) out.innerHTML = '<span class="chip ok">Playing a guitar…</span>';
+  await sleep(2600);
+  if (out) out.innerHTML = '<span class="chip ok">Now my voice…</span>';
+  try { await Voice.init(); await Voice.speak('Can you hear me? If you can, the sound is working.'); } catch (e) {}
+  const blocked = Say.lastError === 'not-allowed';
+  if (out) out.innerHTML = blocked ? '<span class="chip">My voice was blocked</span> Tap the button again. If it stays silent, turn the volume up and flip the silent switch off.'
+    : '<b>Heard both?</b> Good to go. <span class="muted">Heard the guitar but not my voice? Flip the silent switch off and turn the volume up. Nothing at all? Check Bluetooth isn’t sending it to another device.</span>';
+}
+async function micCheck(out) {
+  try { await Engine.startMic(); } catch (e) { out.innerHTML = '<span class="chip">No microphone</span> Allow the microphone for this site in your browser settings (iPhone: Settings → Safari → Microphone → Allow), then try again.'; return; }
+  out.innerHTML = '<div class="meter"><i id="mlv"></i></div><span class="muted">Sing or strum something…</span>';
+  const an = Engine.analyser(), buf = new Float32Array(an.fftSize); let peak = 0;
+  const t0 = performance.now();
+  await new Promise((res) => { const f = () => { an.getFloatTimeDomainData(buf); let s = 0; for (let i = 0; i < buf.length; i += 8) s += buf[i] * buf[i]; const lv = Math.min(1, Math.sqrt(s / (buf.length / 8)) * 9); peak = Math.max(peak, lv); const m = $('#mlv', out); if (m) m.style.width = Math.round(lv * 100) + '%'; if (performance.now() - t0 < 5000) requestAnimationFrame(f); else res(); }; f(); });
+  Engine.stopMic();
+  out.innerHTML = peak > 0.12 ? '<span class="chip ok">I can hear you</span> The microphone works.' : '<span class="chip">Very quiet</span> I barely heard anything. Get closer to the phone, or check nothing is covering the mic.';
+}
+
+// ---------- The instructor's face ----------
+function avatarSVG() {
+  return `<svg class="av" viewBox="0 0 240 260" role="img" aria-label="Your instructor">
+  <defs><linearGradient id="avsk" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#E9B38C"/><stop offset="1" stop-color="#D3946C"/></linearGradient>
+  <linearGradient id="avsw" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3B3F5C"/><stop offset="1" stop-color="#23263A"/></linearGradient></defs>
+  <g class="av-body"><path d="M28 262 C 34 206, 78 188, 120 188 C 162 188, 206 206, 212 262 Z" fill="url(#avsw)"/>
+    <path d="M96 190 Q120 214 144 190" fill="none" stroke="#1A1C2B" stroke-width="5" stroke-linecap="round"/>
+    <path d="M70 200 L176 262" stroke="#8A5A33" stroke-width="11" stroke-linecap="round"/><path d="M70 200 L176 262" stroke="#A8734A" stroke-width="3" stroke-dasharray="2 9" stroke-linecap="round"/></g>
+  <rect x="106" y="150" width="28" height="44" rx="12" fill="#C98962"/>
+  <g class="av-head">
+    <ellipse cx="74" cy="114" rx="10" ry="14" fill="#D9A07A"/><ellipse cx="166" cy="114" rx="10" ry="14" fill="#D9A07A"/>
+    <ellipse cx="120" cy="106" rx="46" ry="55" fill="url(#avsk)"/>
+    <path d="M70 108 C 62 58, 94 38, 124 40 C 158 40, 182 64, 170 108 C 166 86, 150 70, 126 72 C 104 72, 84 82, 70 108 Z" fill="#2E1E16"/>
+    <path d="M86 74 C 100 58, 132 54, 150 66" fill="none" stroke="#4A3226" stroke-width="3" stroke-linecap="round" opacity=".7"/>
+    <g class="av-brows"><path d="M94 90 Q103 84 112 89" fill="none" stroke="#2E1E16" stroke-width="4" stroke-linecap="round"/><path d="M128 89 Q137 84 146 90" fill="none" stroke="#2E1E16" stroke-width="4" stroke-linecap="round"/></g>
+    <g class="av-eyes"><g class="av-eye"><ellipse cx="103" cy="105" rx="5.2" ry="6.4" fill="#1C1C1E"/><circle cx="105" cy="103" r="1.7" fill="#fff"/></g>
+      <g class="av-eye"><ellipse cx="137" cy="105" rx="5.2" ry="6.4" fill="#1C1C1E"/><circle cx="139" cy="103" r="1.7" fill="#fff"/></g></g>
+    <path d="M120 110 Q114 124 119 127 Q122 128 124 126" fill="none" stroke="#B9784F" stroke-width="2.6" stroke-linecap="round"/>
+    <circle cx="94" cy="126" r="8" fill="#F08A7E" opacity=".22"/><circle cx="146" cy="126" r="8" fill="#F08A7E" opacity=".22"/>
+    <path class="av-mouth" d="M106 139 Q120 146 134 139 Q120 146 106 139 Z" fill="#6B2430" stroke="#9E4A4F" stroke-width="2" stroke-linejoin="round"/>
+  </g></svg>`;
+}
+let _kick = 0;
+function avatarKick() { _kick = 1; }
+function startAvatar(el) {
+  const svg = $('.av', el); if (!svg) return;
+  const head = $('.av-head', svg), mouth = $('.av-mouth', svg), eyes = $$('.av-eye', svg), brows = $('.av-brows', svg), eyeG = $('.av-eyes', svg);
+  const reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let open = 0, nextBlink = performance.now() + 2500, blinkT = 0, raf = 0;
+  const frame = (now) => {
+    const t = now / 1000, s = INSTR.state;
+    const talking = s === 'speaking' || s === 'demo';
+    // speech: syllable-rate mouth movement, nudged by word boundaries when the voice reports them
+    let target = 0;
+    if (talking) { const syl = Math.max(0, Math.sin(t * 15.5) * 0.6 + Math.sin(t * 9.1 + 1) * 0.4); target = (0.25 + 0.75 * syl) * (0.55 + 0.45 * Math.abs(Math.sin(t * 2.3))) + _kick * 0.5; }
+    _kick *= 0.86;
+    open += (Math.min(1.2, target) - open) * 0.45;
+    const o = open * 11, w = 14 - open * 2.5;
+    const smile = talking ? 3 : s === 'idle' ? 5 : 3;
+    mouth.setAttribute('d', `M${120 - w} 139 Q120 ${139 + smile - o * 0.25} ${120 + w} 139 Q120 ${139 + smile + o * 1.5} ${120 - w} 139 Z`);
+    // blinking
+    if (now > nextBlink) { blinkT = now; nextBlink = now + 2200 + Math.random() * 3200; }
+    const bk = now - blinkT < 140 ? 0.12 : 1;
+    eyes.forEach((g, i) => g.setAttribute('transform', `translate(0 ${105 * (1 - bk)}) scale(1 ${bk})`));
+    // posture per state
+    let rot = 0, dy = 0, lookX = 0, lookY = 0, browY = 0;
+    if (!reduce) {
+      if (talking) { rot = Math.sin(t * 1.7) * 2.2; dy = Math.sin(t * 3.1) * 1.2; }
+      else if (s === 'listening' || s === 'hearing' || s === 'playing') { rot = 5; browY = -3; dy = s === 'listening' ? 0 : Math.sin(t * 4.2) * 1.6; }
+      else if (s === 'thinking') { lookX = 3; lookY = -3; rot = -3; }
+      else { rot = Math.sin(t * 0.8) * 1.2; dy = Math.sin(t * 1.3) * 1; }
+    }
+    head.setAttribute('transform', `translate(0 ${dy}) rotate(${rot} 120 160)`);
+    eyeG.setAttribute('transform', `translate(${lookX} ${lookY})`);
+    brows.setAttribute('transform', `translate(0 ${browY})`);
+    raf = requestAnimationFrame(frame);
+  };
+  raf = requestAnimationFrame(frame);
+  onCleanup(() => cancelAnimationFrame(raf));
+}
+// The first time you open the instructor, one tap lets the phone talk.
+function startGate(el, then) {
+  const stage = $('.stage', el); if (!stage || $('.startgate', stage)) return;
+  stage.insertAdjacentHTML('beforeend', `<button class="startgate">${icon('play')}<span><b>Start the lesson</b><small>Tap so I can talk to you</small></span></button>`);
+  $('.startgate', stage).addEventListener('click', (e) => { e.currentTarget.remove(); AudioUnlock.run(); then(); });
+}
+function focusInstructor(el, song) {
+  const f = focus();
+  el.querySelector('.studio-head').insertAdjacentHTML('afterend', focusBar('dark'));
+  const hide = f === 'sing' ? ['chord', 'tuner'] : f === 'guitar' ? ['sing', 'note'] : [];
+  hide.forEach((k) => { const b = $(`[data-tool="${k}"]`, el); if (b) b.remove(); });
+  const tools = $('.dock-tools', el); if (tools) tools.style.gridTemplateColumns = `repeat(${tools.children.length}, 1fr)`;
+  if (f === 'sing') suggest(song ? ['Listen to me sing', `Is ${song.title} in the right key for me?`, 'Why do I go flat up high?', 'Warm me up'] : ['Warm me up', 'Why does my voice crack up high?', 'How do I sound fuller?', 'Listen to me sing']);
+  if (f === 'guitar') suggest(song ? ['My chord changes are slow', 'Check my chord', `How do I strum ${song.title}?`, 'Help me keep rhythm'] : ['Check my chord', 'Why do my strings buzz?', 'Help me keep rhythm', 'How do I play a barre chord?']);
+}
+const _studentMemory = studentMemory;
+studentMemory = function () { const m = _studentMemory(); m.practisingToday = { sing: 'singing only: keep the lesson on the voice', guitar: 'guitar only: keep the lesson on guitar', both: 'singing and guitar' }[focus()]; return m; };
+
+// ---------- Guidance: a short walkthrough, and help on each screen ----------
+function tour(startAt) {
+  if ($('.tour')) return;
+  let i = startAt || 0;
+  const steps = [
+    () => `<span class="eyebrow">Step 1 of 4</span><h3>What are you practising?</h3><label class="field">Your first name<input type="text" id="tname" value="${esc(Store.data.profile.name || '')}" autocomplete="given-name" placeholder="So I can talk to you properly"></label><p class="muted">The app changes to match what you pick. You can switch any time with the bar at the top.</p>
+      <div class="tour-pick">${Object.entries(FOCI).map(([k, v]) => `<button class="tp ${focus() === k ? 'on' : ''}" data-tf="${k}">${icon(v.icon)}<b>${k === 'both' ? 'Both together' : v.name}</b><small>${k === 'sing' ? 'Voice lessons, pitch, range' : k === 'guitar' ? 'Chords, strumming, timing' : 'Sing while you play'}</small></button>`).join('')}</div>`,
+    () => `<span class="eyebrow">Step 2 of 4</span><h3>Check your sound</h3><p class="muted">You should hear a guitar, then my voice. Turn your volume up first.</p><button class="btn primary" data-sc>${icon('play')}Play test sound</button><div class="tour-out" id="tso"></div>`,
+    () => `<span class="eyebrow">Step 3 of 4</span><h3>Let me hear you</h3><p class="muted">I listen through your microphone to measure your pitch and chords. Audio stays on your phone.</p><button class="btn primary" data-mc>${icon('mic')}Test microphone</button><div class="tour-out" id="tmo"></div>`,
+    () => `<span class="eyebrow">Step 4 of 4</span><h3>How a lesson works</h3><ol class="how">
+      <li><b>Pick a song</b><span>Songs tab. Anything you like: nothing is locked.</span></li>
+      <li><b>Tap Start Learning</b><span>The song is broken into short steps. Do them in order.</span></li>
+      <li><b>Tap the red button and ${focus() === 'guitar' ? 'play' : focus() === 'sing' ? 'sing' : 'sing or play'}</b><span>I listen, then tell you what was good and the one thing to fix.</span></li>
+      <li><b>Stuck? Ask the instructor</b><span>The middle tab. Talk or type, and I’ll show you.</span></li></ol>`,
+  ];
+  sheet(`<div class="tour" id="tour"></div><div class="row tour-nav"><button class="btn ghost" data-tb>Back</button><span class="dots" id="tdots"></span><button class="btn primary" data-tn>Next</button></div>`, (sh, close) => {
+    const draw = () => {
+      $('#tour', sh).innerHTML = steps[i]();
+      $('#tdots', sh).innerHTML = steps.map((_, k) => `<i class="${k === i ? 'on' : ''}"></i>`).join('');
+      $('[data-tb]', sh).style.visibility = i ? 'visible' : 'hidden';
+      $('[data-tn]', sh).textContent = i === steps.length - 1 ? 'Let’s go' : 'Next';
+    };
+    draw();
+    sh.addEventListener('input', (e) => { if (e.target.id === 'tname') { Store.data.profile.name = e.target.value.trim().slice(0, 30); Store.save(); } });
+    sh.addEventListener('click', (e) => {
+      const b = e.target.closest('button'); if (!b) return;
+      if (b.dataset.tf) { setFocus(b.dataset.tf, true); return draw(); }
+      if (b.matches('[data-sc]')) return soundCheck($('#tso', sh));
+      if (b.matches('[data-mc]')) return micCheck($('#tmo', sh));
+      if (b.matches('[data-tb]')) { i = Math.max(0, i - 1); return draw(); }
+      if (b.matches('[data-tn]')) { if (i < steps.length - 1) { i++; return draw(); } Store.data.profile.tourDone = true; Store.save(); close(); go(App.view === 'welcome' ? 'home' : App.view, App.params); }
+    });
+  });
+}
+const helpBtn = () => `<button class="helpbtn" data-help aria-label="How to use the app">?</button>`;
+document.addEventListener('click', (e) => { if (e.target.closest('[data-help]')) { e.preventDefault(); tour(); } });
+
+// ---------- Wire focus + guidance into the screens ----------
+function wrapView(name, before, after) {
+  const f = VIEWS[name]; if (!f) return;
+  VIEWS[name] = (el, params) => { params = params || {}; if (before && before(params, el) === false) return; f(el, params); if (after && el.isConnected !== false) after(el, params); };
+}
+wrapView('home', null, (el) => {
+  const head = $('header.lt', el); if (!head) return;
+  head.insertAdjacentHTML('beforeend', helpBtn());
+  const f = focus(), p = Store.data.profile;
+  const learning = Object.entries(Store.data.songLearn || {}).filter(([id, s]) => s.last && findSong(id)).sort((a, b) => b[1].last - a[1].last).map(([id]) => findSong(id));
+  const song = learning[0] || SONGS[0];
+  const plan = f === 'sing'
+    ? [['Warm up', '3 minutes of humming', { ex: 'warm-hum' }, 'mic'], ['Check your pitch', 'Live tuner for your voice', { v: 'live' }, 'live'], ['Sing ' + song.title, 'Record a take, get feedback', { play: song.id, mode: 'voice' }, 'play']]
+    : f === 'guitar'
+    ? [['Tune up', 'All six strings', { v: 'guitar', p: { sec: 'tuner' } }, 'guitar'], ['Chord warm-up', 'Chords from ' + song.title, { step: song.id, id: 'chords' }, 'songs'], ['Play ' + song.title, 'Strum along, get feedback', { play: song.id, mode: 'guitar' }, 'play']]
+    : [['Warm up your voice', '3 minutes of humming', { ex: 'warm-hum' }, 'mic'], ['Tune your guitar', 'All six strings', { v: 'guitar', p: { sec: 'tuner' } }, 'guitar'], ['Sing + play ' + song.title, 'One take, both parts measured', { play: song.id, mode: 'both' }, 'play']];
+  head.insertAdjacentHTML('afterend', `${focusBar()}<section class="today"><div class="today-h"><b>Today’s practice</b><small>${f === 'both' ? 'Singing and guitar' : FOCI[f].name} · about 15 minutes</small></div>
+    <div class="today-steps">${plan.map(([t, s, a, ic], k) => `<button class="tstep" data-plan='${esc(JSON.stringify(a))}'><span class="tn">${k + 1}</span><span class="st"><b>${esc(t)}</b><small>${esc(s)}</small></span>${icon(ic)}</button>`).join('')}</div></section>`);
+  $('.today', el).addEventListener('click', (e) => {
+    const b = e.target.closest('[data-plan]'); if (!b) return; e.stopPropagation();
+    const a = JSON.parse(b.dataset.plan);
+    if (a.ex) { App.lesson = null; return go('exercise', { id: a.ex }); }
+    if (a.v) return go(a.v, a.p || {});
+    if (a.play) return go('player', { id: a.play, mode: a.mode });
+    if (a.step) return startStep(findSong(a.step), a.id);
+  });
+  if (f === 'sing') { const m = $('.meet b', el); if (m) m.textContent = 'Sing it through with me.'; }
+  if (!p.tourDone) setTimeout(() => { if (App.view === 'home' && !$('.sheet')) tour(); }, 400);
+});
+wrapView('songs', null, (el) => { const h = $('header.lt', el) || el.firstElementChild; if (h) h.insertAdjacentHTML('afterend', focusBar()); });
+wrapView('track', (params) => { const f = focus(); if (f !== 'both') { const st = songState(params.id); if (st) { st.mode = songMode(f); Store.save(); } } }, (el, params) => {
+  const s = findSong(params.id); if (!s) return;
+  const btns = $('.al-btns', el); if (btns && !$('.applem', btns)) btns.insertAdjacentHTML('beforeend', appleBtn(s));
+  const steps = $('.tracks', el);
+  if (steps && !$('.howto', el)) steps.insertAdjacentHTML('beforebegin', `<p class="howto">${icon('chev')}Work down this list. Tap a step, then tap the red button and ${focus() === 'guitar' ? 'play' : focus() === 'sing' ? 'sing' : 'sing or play'}. I’ll tell you what to fix.</p>`);
+  // the three paths double as the focus switch on a song page
+  $$('.paths [data-mode]', el).forEach((b) => b.addEventListener('click', () => { Store.data.profile.focus = b.dataset.mode; document.documentElement.dataset.focus = b.dataset.mode; Store.save(); }, true));
+  // re-apply after redraws (the track view re-renders itself)
+  new MutationObserver(() => { const b2 = $('.al-btns', el); if (b2 && !$('.applem', b2)) b2.insertAdjacentHTML('beforeend', appleBtn(s)); const st2 = $('.tracks', el); if (st2 && !$('.howto', el)) st2.insertAdjacentHTML('beforebegin', `<p class="howto">${icon('chev')}Work down this list. Tap a step, then tap the red button. I’ll tell you what to fix.</p>`); }).observe(el, { childList: true });
+});
+wrapView('player', (params) => { const f = focus(); if (!params.mode && f !== 'both') params.mode = 'listen'; }, (el, params) => {
+  const f = focus(), s = findSong(params.id); if (!s) return;
+  const allow = f === 'sing' ? ['listen', 'voice'] : f === 'guitar' ? ['listen', 'guitar'] : ['listen', 'guitar', 'voice', 'both'];
+  $$('.np-modes [data-mode]', el).forEach((b) => { if (!allow.includes(b.dataset.mode)) b.remove(); });
+  const modes = $('.np-modes', el); if (modes) modes.style.gridTemplateColumns = `repeat(${modes.children.length}, 1fr)`;
+  const hint = () => { const m = (($('.np-modes [aria-pressed="true"]', el) || {}).dataset || {}).mode || 'listen'; return m === 'listen' ? (s.audio ? 'Tap ▶ to play your recording with the chords lighting up. Sing or play along any time. To get feedback, pick ' : 'Tap ▶ to hear the chords played on guitar, and sing or play along. To get feedback, pick ') + (f === 'sing' ? 'Voice' : f === 'guitar' ? 'Guitar' : 'Guitar, Voice or Both') + ' and tap the red button.' : 'Tap the red button. You get a 4-beat count-in, then ' + (m === 'guitar' ? 'strum' : m === 'voice' ? 'sing' : 'sing and strum') + ' along. ' + (Store.data.profile.headphones ? 'The music plays in your headphones; I only hear you.' : 'Without headphones I play only a click, so the mic hears just you.'); };
+  const hpLabel = () => Store.data.profile.headphones ? 'Headphones in: the music plays during your takes' : 'No headphones: tap if you have them in, so the music plays while you record';
+  const bottom = $('.np-bottom', el);
+  if (bottom) bottom.insertAdjacentHTML('beforebegin', `<p class="np-help" id="nph">${esc(hint())}</p><div class="np-apple"><button class="pill sm hp-t" data-hp aria-pressed="${!!Store.data.profile.headphones}">🎧 <span>${esc(hpLabel())}</span></button>${s.audio ? '' : appleBtn(s, 'sm')}</div>`);
+  const hpb = $('[data-hp]', el);
+  if (hpb) hpb.addEventListener('click', (e) => { e.stopPropagation(); const p = Store.data.profile; p.headphones = !p.headphones; Store.save(); hpb.setAttribute('aria-pressed', p.headphones); $('span', hpb).textContent = hpLabel(); });
+  if (s.audio) { const t = $('#nptempo', el); if (t) { t.disabled = true; t.closest('.np-tempo').title = 'Your recording plays at its own speed'; } }
+  $('.np-modes', el) && $('.np-modes', el).addEventListener('click', () => setTimeout(() => { const h = $('#nph', el); if (h) h.textContent = hint(); }, 0));
+});
+wrapView('practice', (params) => { const f = focus(); if (!params.tab) params.tab = f === 'guitar' ? 'guitar' : 'voice'; }, (el) => {
+  const f = focus(), h = $('header.lt', el); if (h) h.insertAdjacentHTML('afterend', focusBar());
+  if (f === 'both') return;
+  const seg = $('#pt', el); if (seg) seg.remove();
+  const hideV = f === 'sing' ? ['guitar', 'singplay'] : ['live', 'range', 'coach', 'exlib', 'singplay'];
+  $$('.grow[data-v]', el).forEach((b) => { if (hideV.includes(b.dataset.v)) b.remove(); });
+  $$('.group', el).forEach((g) => { if (!g.children.length) g.remove(); });
+});
+wrapView('you', null, (el) => { const h = $('header.lt', el); if (h && !$('[data-help]', h)) h.insertAdjacentHTML('beforeend', helpBtn()); });
+VIEWS.me = VIEWS.you;
+
+// ---------- Make it yours: ideas built from this song's own structure, not from the original artist ----------
+function makeItYoursHTML(song) {
+  const f = focus(), arr = arrOf(song), pat = GTR_PATTERNS.find((p) => p.id === arr.pattern) || GTR_PATTERNS[0];
+  const others = GTR_PATTERNS.filter((p) => p.id !== pat.id && Math.abs(p.level - pat.level) <= 1).slice(0, 2);
+  const capoAlts = songArrangements(song).filter((a) => a.id !== arr.id && a.capo !== arr.capo).slice(0, 1);
+  const secs = song.sections.map((s) => s.name.replace(/ \(×\d+\)$/, ''));
+  const name = Store.data.profile.name;
+  const voice = [
+    ['Your key', 'Move the song until your voice sounds easy and full. The record’s key suits the original singer, not necessarily you.', { ask: 1 }],
+    ['A dynamics plan', secs.length > 1 ? `Sing ${secs[0]} close to speaking, and save your full voice for ${secs[secs.length - 1]}.` : 'First time through, close to speaking. Second time, open up. Contrast is what makes it feel like yours.'],
+    ['Your phrasing', 'Start one line a beat late, or hold one word longer than the record does. Choose where you want a straight note and where you want vibrato.'],
+    ['Two takes', 'Record it two different ways, play both back, and keep what sounds most like you.', { take: 1 }],
+  ];
+  const gtr = [
+    ...others.map((p) => [`Try the ${p.name.toLowerCase()}`, `${p.grid.replace(/-/g, '·')}: ${p.text}`]),
+    ['Half-time verses', 'Strum only on beats 1 and 3 in the first part, then switch to the full pattern. The lift when it kicks in is yours.'],
+    ...capoAlts.map((a) => [a.name, a.note + ' Different shapes give a different colour to the same song.']),
+  ];
+  const rows = (list) => list.map(([t, b, a]) => `<div class="miy-i"><b>${esc(t)}</b><span>${esc(b)}</span>${a && a.ask ? `<button class="pill sm" data-miy-ask>Find my key with the instructor</button>` : ''}${a && a.take ? `<button class="pill sm" data-play="${esc(song.id)}">Record a take</button>` : ''}</div>`).join('');
+  return `<section class="sect miy"><h2>Make It Yours</h2><p class="sect-sub">You’re not here to copy ${esc(song.artist)}. ${name ? esc(name) + ', h' : 'H'}ere are ways to put your own stamp on ${esc(song.title)}.</p>
+    ${f !== 'guitar' ? `<h3 class="ghead">Voice</h3><div class="miy-l">${rows(voice)}</div>` : ''}${f !== 'sing' ? `<h3 class="ghead">Guitar</h3><div class="miy-l">${rows(gtr)}</div>` : ''}</section>`;
+}
+(function () {
+  const prev = VIEWS.track;
+  VIEWS.track = (el, params) => {
+    prev(el, params);
+    const s = findSong(params.id); if (!s) return;
+    const put = () => { if ($('.miy', el)) return; const anchor = $('.meet.slim', el); if (anchor) anchor.insertAdjacentHTML('beforebegin', makeItYoursHTML(s)); else el.insertAdjacentHTML('beforeend', makeItYoursHTML(s)); };
+    put(); new MutationObserver(put).observe(el, { childList: true });
+    el.addEventListener('click', (e) => { if (e.target.closest('[data-miy-ask]')) { e.stopPropagation(); App.instrAsk = 'Is ' + s.title + ' in the right key for my voice?'; go('instructor', { song: s.id }); } }, true);
+  };
+})();
+// Questions handed to the instructor from another screen are asked once the lesson has started.
+(function () {
+  const prev = VIEWS.instructor;
+  VIEWS.instructor = (el, params) => {
+    prev(el, params);
+    const q = App.instrAsk; App.instrAsk = null; if (!q) return;
+    const ask = () => setTimeout(() => userSays(q), 300);
+    const gate = $('.startgate', el);
+    if (gate) gate.addEventListener('click', ask); else setTimeout(ask, 900);
+  };
+})();
+// Songs: a way in to breaking down any song
+(function () {
+  const prev = VIEWS.songs;
+  VIEWS.songs = (el, params) => {
+    prev(el, params);
+    const anchor = $('.focusbar', el) || $('header.lt', el);
+    if (anchor) anchor.insertAdjacentHTML('afterend', `<button class="bd-cta" data-bd><span class="ico" style="background:#FF375F">${icon('wave')}</span><span><b>Break down any song</b><small>Use a song file, or play it out loud. I’ll work out the chords, key and tempo.</small></span>${icon('chev')}</button>`);
+    $('[data-bd]', el) && $('[data-bd]', el).addEventListener('click', (e) => { e.stopPropagation(); go('breakdown'); });
+  };
+})();
+
+// ===================== Break down a song =====================
+// Takes a recording of any song (a file you own, or the song playing out loud into the mic) and works out
+// tempo, key and the chord in each bar from the audio itself. Everything runs on the device.
+// Limits, stated in the UI: one chord per bar, a steady tempo is assumed, busy mixes make mistakes, and the sung
+// melody is not extracted from a full mix (too unreliable to teach from).
+
+function sbDownsample(x, sr) {
+  const f = Math.max(1, Math.round(sr / 11025)), n = Math.floor(x.length / f), y = new Float32Array(n);
+  for (let i = 0; i < n; i++) { let s = 0; for (let k = 0; k < f; k++) s += x[i * f + k]; y[i] = s / f; }
+  return { x: y, sr: sr / f };
+}
+// Spectral-flux onset envelope (hop ≈ 23 ms)
+function sbOnsets(x, sr) {
+  const N = 1024, H = 256, n = Math.floor((x.length - N) / H), env = new Float32Array(Math.max(0, n));
+  const win = new Float32Array(N).map((_, i) => 0.5 - 0.5 * Math.cos((2 * Math.PI * i) / (N - 1)));
+  let prev = new Float32Array(N / 2);
+  const re = new Float32Array(N), im = new Float32Array(N);
+  for (let j = 0; j < n; j++) {
+    for (let i = 0; i < N; i++) { re[i] = x[j * H + i] * win[i]; im[i] = 0; }
+    pcFFT(re, im);
+    let s = 0; const cur = new Float32Array(N / 2);
+    for (let k = 2; k < N / 2; k++) { const m = Math.log1p(100 * Math.hypot(re[k], im[k])); cur[k] = m; const d = m - prev[k]; if (d > 0) s += d; }
+    env[j] = s; prev = cur;
+  }
+  // remove the slow trend so only attacks remain
+  const out = new Float32Array(env.length), W = 16;
+  for (let j = 0; j < env.length; j++) { let a = 0, c = 0; for (let k = Math.max(0, j - W); k < Math.min(env.length, j + W); k++) { a += env[k]; c++; } out[j] = Math.max(0, env[j] - a / c); }
+  return { env: out, hop: H / sr };
+}
+function sbTempo(on) {
+  const { env, hop } = on, lagOf = (bpm) => 60 / bpm / hop;
+  let best = null;
+  for (let bpm = 60; bpm <= 180; bpm += 0.5) {
+    const L = lagOf(bpm), l0 = Math.floor(L), fr = L - l0;
+    let s = 0;
+    for (let j = 0; j + l0 + 1 < env.length; j++) s += env[j] * (env[j + l0] * (1 - fr) + env[j + l0 + 1] * fr);
+    s /= env.length - l0;
+    const w = Math.exp(-0.5 * Math.pow(Math.log2(bpm / 110) / 0.9, 2));
+    if (!best || s * w > best.s) best = { bpm, s: s * w };
+  }
+  const L = lagOf(best.bpm);
+  let phase = 0, ps = -1;
+  for (let p = 0; p < L; p++) { let s = 0; for (let t = p; t < env.length; t += L) s += env[Math.round(t)] || 0; if (s > ps) { ps = s; phase = p; } }
+  const beats = []; for (let t = phase; t < env.length; t += L) beats.push(t * hop);
+  return { bpm: Math.round(best.bpm), beats };
+}
+function sbChromaAt(x, sr, t0, t1) {
+  const N = 4096, c = new Float64Array(12); let n = 0;
+  for (let t = t0; t + N / sr <= t1 + 0.05; t += Math.max(0.12, (t1 - t0) / 3)) {
+    const sp = gtrSpectrum(x, Math.floor(t * sr), sr, N), pk = gtrPeaks(sp);
+    if (pk.max < 1e-4) continue;
+    const ch = gtrChroma(pk.peaks); let z = 0; for (const v of ch) z += v * v; z = Math.sqrt(z) || 1;
+    for (let i = 0; i < 12; i++) c[i] += ch[i] / z; n++;
+  }
+  let z = 0; for (const v of c) z += v * v; z = Math.sqrt(z);
+  return z > 0 ? Array.from(c, (v) => v / z) : null;
+}
+const SB_MAJ = [6.35, 2.23, 3.48, 2.33, 4.38, 4.09, 2.52, 5.19, 2.39, 3.66, 2.29, 2.88], SB_MIN = [6.33, 2.68, 3.52, 5.38, 2.6, 3.53, 2.54, 4.75, 3.98, 2.69, 3.34, 3.17];
+function sbKey(total) {
+  const corr = (a, b) => { const ma = mean(a), mb = mean(b); let s = 0, x = 0, y = 0; for (let i = 0; i < 12; i++) { s += (a[i] - ma) * (b[i] - mb); x += (a[i] - ma) ** 2; y += (b[i] - mb) ** 2; } return s / Math.sqrt(x * y || 1); };
+  let best = null;
+  for (let r = 0; r < 12; r++) for (const [minor, P] of [[false, SB_MAJ], [true, SB_MIN]]) { const rot = P.map((_, i) => P[(i - r + 12) % 12]); const s = corr(total, rot); if (!best || s > best.s) best = { root: r, minor, s }; }
+  return best;
+}
+function sbDiatonic(key) {
+  const rel = key.minor ? (key.root + 3) % 12 : key.root; // relative major
+  return new Set([[0, ''], [2, 'm'], [4, 'm'], [5, ''], [7, ''], [9, 'm']].map(([iv, q]) => (rel + iv) % 12 + q));
+}
+// Viterbi over bars: chords stay put unless the audio clearly changes; chords in the key get a small preference.
+function sbChords(bars, key) {
+  const T = gtrTemplates().filter((t) => t.type === '' || t.type === 'm'), dia = sbDiatonic(key);
+  const em = bars.map((c) => T.map((t) => (c ? t.t.reduce((s, v, i) => s + v * c[i], 0) : 0) + (dia.has(t.root + t.type) ? 0.05 : 0)));
+  const n = bars.length, K = T.length, sw = 0.07;
+  const sc = [em[0].slice()], bp = [new Int16Array(K)];
+  for (let i = 1; i < n; i++) {
+    let bi = 0; for (let k = 1; k < K; k++) if (sc[i - 1][k] > sc[i - 1][bi]) bi = k;
+    const row = new Array(K), b = new Int16Array(K);
+    for (let k = 0; k < K; k++) { const stay = sc[i - 1][k], jump = sc[i - 1][bi] - sw; if (stay >= jump) { row[k] = stay + em[i][k]; b[k] = k; } else { row[k] = jump + em[i][k]; b[k] = bi; } }
+    sc.push(row); bp.push(b);
+  }
+  let k = 0; for (let j = 1; j < K; j++) if (sc[n - 1][j] > sc[n - 1][k]) k = j;
+  const path = new Array(n); for (let i = n - 1; i >= 0; i--) { path[i] = k; k = bp[i][k]; }
+  return path.map((k, i) => ({ name: SP_SPELL[T[k].root] + T[k].type, alts: em[i].map((s, j) => ({ s, name: SP_SPELL[T[j].root] + T[j].type })).sort((a, b) => b.s - a.s).slice(0, 4).map((a) => a.name), conf: bars[i] ? em[i][k] : 0 }));
+}
+// Pick the capo that turns the sounding chords into shapes you can play, preferring open chords.
+function sbCapo(sounding) {
+  const have = (n) => !!CHORD[n];
+  let best = null;
+  for (let capo = 0; capo <= 7; capo++) {
+    const shapes = sounding.map((c) => spTransposeName(c, -capo));
+    const miss = shapes.filter((s) => !have(s)).length, barre = new Set(shapes.filter((s) => have(s) && CHORD[s].barre)).size;
+    const score = miss * 10 + barre + capo * 0.05;
+    if (!best || score < best.score) best = { capo, shapes, score };
+  }
+  // anything still missing: nearest playable chord by shared notes
+  const pcs = (n) => { const p = gtrParseName(n); return (GTR_TYPES[p.type] || [0, 4, 7]).map((x) => (p.root + x) % 12); };
+  best.shapes = best.shapes.map((s) => { if (have(s)) return s; const want = pcs(s); let b = null; for (const c of GTR_CHORDS) { const ov = pcs(c.name).filter((x) => want.includes(x)).length - (c.barre ? 0.3 : 0); if (!b || ov > b.ov) b = { ov, name: c.name }; } return b.name; });
+  return best;
+}
+// Group the bars into 4-bar phrases; phrases that repeat become one named part.
+function sbSections(shapes) {
+  const ph = []; for (let i = 0; i < shapes.length; i += 4) ph.push(shapes.slice(i, i + 4));
+  const parts = [], form = []; sbSections.lastFirst = [];
+  ph.forEach((p, pi) => {
+    if (p.length < 4) { while (p.length < 4) p.push(p[p.length - 1]); }
+    let hit = parts.find((q) => q.bars.every((c, i) => c === p[i]));
+    if (!hit) { if (parts.length >= 8) hit = parts.reduce((a, q) => (q.bars.filter((c, i) => c === p[i]).length > a.bars.filter((c, i) => c === p[i]).length ? q : a)); else { hit = { id: 'p' + parts.length, name: 'Part ' + 'ABCDEFGH'[parts.length], bars: p, n: 0 }; parts.push(hit); sbSections.lastFirst.push(pi * 4); } }
+    hit.n++; form.push(hit.id);
+  });
+  return { sections: parts.map(({ id, name, bars, n }) => ({ id, name: name + (n > 1 ? ` (×${n})` : ''), bars })), form };
+}
+async function breakDownAudio(samples, sr, progress) {
+  const tick = async (m) => { if (progress) progress(m); await sleep(20); };
+  await tick('Listening to the whole song…');
+  const d = sbDownsample(samples, sr);
+  let pk = 0; for (let i = 0; i < d.x.length; i++) pk = Math.max(pk, Math.abs(d.x[i]));
+  if (pk < 0.01) throw new Error('That recording is almost silent.');
+  await tick('Finding the beat…');
+  const on = sbOnsets(d.x, d.sr), tp = sbTempo(on);
+  if (tp.beats.length < 16) throw new Error('That’s too short to work out a song. Use at least 20 seconds.');
+  await tick('Hearing the chords…');
+  const beatC = [];
+  for (let i = 0; i + 1 < tp.beats.length; i++) { beatC.push(sbChromaAt(d.x, d.sr, tp.beats[i], tp.beats[i + 1])); if (i % 40 === 0) await tick(`Hearing the chords… ${Math.round((100 * i) / tp.beats.length)}%`); }
+  // where does each bar start? the beat phase with the most chord changes on beat 1
+  const nov = beatC.map((c, i) => (i && c && beatC[i - 1] ? 1 - c.reduce((s, v, k) => s + v * beatC[i - 1][k], 0) : 0));
+  let ph = 0, pb = -1; for (let p = 0; p < 4; p++) { let s = 0; for (let i = p; i < nov.length; i += 4) s += nov[i]; if (s > pb) { pb = s; ph = p; } }
+  const bars = [], barT = []; for (let i = ph; i + 4 <= beatC.length; i += 4) { const c = new Array(12).fill(0); let ok = 0; for (let k = 0; k < 4; k++) if (beatC[i + k]) { ok++; beatC[i + k].forEach((v, j) => (c[j] += v)); } if (ok) { const z = Math.hypot(...c) || 1; for (let j = 0; j < 12; j++) c[j] /= z; } bars.push(ok ? c : null); barT.push(tp.beats[i]); }
+  // drop silent intro/outro bars
+  while (bars.length && !bars[0]) { bars.shift(); barT.shift(); } while (bars.length && !bars[bars.length - 1]) { bars.pop(); barT.pop(); }
+  const total = new Array(12).fill(0); bars.forEach((c) => c && c.forEach((v, j) => (total[j] += v)));
+  const key = sbKey(total);
+  await tick('Naming the chords…');
+  const ch = sbChords(bars, key);
+  // name the key from the chords themselves: the key whose chords cover the most bars (tonic chord as tiebreak)
+  { let best = null; const names = ch.map((c) => c.name);
+    for (let r = 0; r < 12; r++) for (const minor of [false, true]) { const k = { root: r, minor }, dia = sbDiatonic(k), tonic = SP_SPELL[r] + (minor ? 'm' : '');
+      const cover = names.filter((n) => { const p = gtrParseName(n); return dia.has(p.root + p.type); }).length, tn = names.filter((n) => n === tonic).length;
+      const sc = cover * 10 + tn * 2 + (names[0] === tonic ? 3 : 0) + (names[names.length - 1] === tonic ? 3 : 0) + (r === key.root && minor === key.minor ? 1 : 0);
+      if (!best || sc > best.sc) best = { root: r, minor, sc }; }
+    key.root = best.root; key.minor = best.minor; }
+  const cap = sbCapo([...new Set(ch.map((c) => c.name))]);
+  const map = Object.fromEntries([...new Set(ch.map((c) => c.name))].map((n, i, a) => [n, cap.shapes[a.indexOf(n)]]));
+  const shapes = ch.map((c) => map[c.name]);
+  const { sections, form } = sbSections(shapes.slice(0, 160));
+  const secStart = {}; sbSections.lastFirst.forEach((bi, k) => { secStart['p' + k] = barT[bi] || 0; });
+  const conf = mean(ch.map((c) => c.conf));
+  return { secStart, barSec: barT.length > 1 ? (barT[barT.length - 1] - barT[0]) / (barT.length - 1) : 240 / tp.bpm, bpm: tp.bpm, key, capo: cap.capo, sounding: ch.map((c) => c.name), alts: ch.map((c) => c.alts.map((a) => spTransposeName(a, -cap.capo)).filter((n) => CHORD[n])), shapes, sections, form, bars: bars.length, confidence: conf, seconds: samples.length / sr };
+}
+async function decodeSongFile(file) {
+  await Engine.ensure();
+  const ab = await file.arrayBuffer();
+  const buf = await new Promise((res, rej) => { const p = Engine.ctx.decodeAudioData(ab, res, rej); if (p && p.then) p.then(res, rej); });
+  const mono = new Float32Array(buf.length);
+  for (let c = 0; c < buf.numberOfChannels; c++) { const d = buf.getChannelData(c); for (let i = 0; i < d.length; i++) mono[i] += d[i] / buf.numberOfChannels; }
+  return { samples: mono, sr: buf.sampleRate };
+}
+
+// ---------- the screen ----------
+VIEWS.breakdown = (el) => {
+  let rec = null, res = null, name = '', srcBlob = null;
+  const shell = () => {
+    el.innerHTML = `<button class="btn ghost small hub-back" data-back>${icon('back')}Songs</button>
+    <header class="lt"><h1>Break down a song</h1></header>
+    <p class="lede-sm">Give me any song and I’ll work out its tempo, key and chords from the audio, then turn it into lessons. It all runs on your phone.</p>
+    <div class="group bd-in">
+      <label class="grow">${'<span class="ico" style="background:#FF375F">' + icon('upload') + '</span>'}<span>Use an audio file</span><small>A song you own: MP3, M4A, WAV</small><input type="file" accept="audio/*,video/*,.m4a,.mp3,.wav,.aac,.flac" hidden id="bdf"></label>
+      <button class="grow" data-mic>${'<span class="ico" style="background:#0A84FF">' + icon('mic') + '</span>'}<span>Listen to it playing</span><small>Play it on a speaker near your phone</small>${icon('chev')}</button>
+    </div>
+    <p class="fine">Streaming apps (Apple Music, Spotify) protect their audio, so no app can analyse it directly. Playing it out loud for the microphone works with any of them.</p>
+    <div id="bdo"></div>`;
+  };
+  shell();
+  const out = () => $('#bdo', el);
+  const run = async (samples, sr, label) => {
+    name = label; out().innerHTML = `<div class="bd-prog"><div class="spinner"></div><span id="bdp">Starting…</span></div>`;
+    try { res = await breakDownAudio(samples, sr, (m) => { const p = $('#bdp', el); if (p) p.textContent = m; }); show(); }
+    catch (e) { console.error(e); out().innerHTML = `<div class="notice error">${esc(e.message || 'I couldn’t read that file.')}</div>`; }
+  };
+  const show = () => {
+    const keyName = SP_SPELL_UI[res.key.root] + (res.key.minor ? ' minor' : ' major');
+    const low = res.confidence < 0.62;
+    out().innerHTML = `<section class="panel stack bd-res">
+      <div class="bd-stats"><div><b>${res.bpm}</b><span>BPM</span></div><div><b>${esc(keyName)}</b><span>Key</span></div><div><b>${res.capo ? 'Capo ' + res.capo : 'No capo'}</b><span>Easiest shapes</span></div><div><b>${res.bars}</b><span>Bars</span></div></div>
+      ${low ? '<div class="notice">This one was hard to hear (a busy mix or a live recording). Check the chords by ear: tap any chord to change it.</div>' : '<p class="fine">Tap any chord to change it if it sounds wrong. I hear one chord per bar.</p>'}
+      <label class="field">Title<input type="text" id="bdt" value="${esc(name.replace(/\.[a-z0-9]+$/i, ''))}"></label><label class="field">Artist<input type="text" id="bda" placeholder="Who sings it"></label>
+      <div id="bds">${res.sections.map((s, si) => `<div class="smap"><div class="smap-h"><b>${esc(s.name)}</b></div><div class="chordline">${s.bars.map((c, bi) => `<button class="bdc" data-s="${si}" data-b="${bi}"><b>${esc(c)}</b></button>`).join('')}</div></div>`).join('')}</div>
+      <div class="row"><button class="btn ghost" data-redo>Start over</button><button class="btn primary" data-save style="flex:1">Save and learn it</button></div></section>`;
+  };
+  el.addEventListener('change', async (e) => {
+    if (e.target.id !== 'bdf' || !e.target.files[0]) return;
+    const f = e.target.files[0];
+    out().innerHTML = `<div class="bd-prog"><div class="spinner"></div><span>Opening ${esc(f.name)}…</span></div>`;
+    try { const d = await decodeSongFile(f); srcBlob = f; run(d.samples, d.sr, f.name); } catch (err) { out().innerHTML = `<div class="notice error">I couldn’t open that file. Try an MP3, M4A or WAV.</div>`; }
+  });
+  el.addEventListener('click', async (e) => {
+    const b = e.target.closest('button'); if (!b) return;
+    if (b.matches('[data-back]')) { Engine.stopMic(); return go('songs'); }
+    if (b.matches('[data-mic]')) {
+      if (rec) return;
+      try { await Engine.startMic(); } catch (err) { out().innerHTML = '<div class="notice error">I need the microphone for this. Allow it for this site, then try again.</div>'; return; }
+      Engine.startRecording(); rec = { t0: performance.now() };
+      out().innerHTML = `<div class="bd-prog"><div class="rec-dot"></div><span id="bdr">Listening… play the song now. 0:00</span><button class="btn primary small" data-stop>Done</button></div><p class="fine">A minute or more works best. Keep the speaker close and the room quiet.</p>`;
+      rec.iv = setInterval(() => { const s = Math.round((performance.now() - rec.t0) / 1000), r = $('#bdr', el); if (r) r.textContent = `Listening… play the song now. ${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; if (s >= 300) $('[data-stop]', el) && $('[data-stop]', el).click(); }, 500);
+      return;
+    }
+    if (b.matches('[data-stop]')) { clearInterval(rec.iv); const r = Engine.stopRecording(); Engine.stopMic(); rec = null; if (!r) { out().innerHTML = '<div class="notice error">I didn’t get any audio.</div>'; return; } srcBlob = wavBlob(r.samples, r.sr); return run(r.samples, r.sr, 'Song from the mic'); }
+    if (b.matches('[data-redo]')) { res = null; shell(); return; }
+    if (b.classList.contains('bdc')) {
+      const si = +b.dataset.s, bi = +b.dataset.b, cur = res.sections[si].bars[bi];
+      const opts = [...new Set([cur, ...GTR_CHORDS.filter((c) => !/[0-9]$/.test(c.name) || /7$/.test(c.name)).map((c) => c.name)])];
+      return sheet(`<h3>Change this chord</h3><div class="bd-pick">${opts.map((n) => `<button class="pill sm ${n === cur ? 'on' : ''}" data-pick="${esc(n)}">${esc(n)}</button>`).join('')}</div><button class="btn ghost" data-x>Cancel</button>`, (sh, close) => {
+        $('[data-x]', sh).addEventListener('click', close);
+        sh.addEventListener('click', async (ev) => { const p = ev.target.closest('[data-pick]'); if (!p) return; res.sections[si].bars[bi] = p.dataset.pick; close(); show(); await Engine.ensure(); spPlayChord(p.dataset.pick, res.capo, Engine.ctx.currentTime + 0.05, 1.6); });
+      });
+    }
+    if (b.matches('[data-save]')) {
+      b.disabled = true;
+      const t = $('#bdt', el).value.trim() || 'My song', a = $('#bda', el).value.trim() || 'Broken down by you';
+      const s = { id: 'my-' + Date.now().toString(36), title: t, artist: a, capo: res.capo, bpm: clamp(res.bpm, 40, 200), feel: '4/4', pattern: 'e', genre: 'My songs',
+        sections: res.sections.map((x) => ({ id: x.id, name: x.name, bars: x.bars })), form: res.form, analysed: true,
+        guitar: `Worked out from the recording: ${res.capo ? 'capo ' + res.capo + ', ' : ''}${[...new Set(res.sections.flatMap((x) => x.bars))].join(' ')}.`,
+        voice: `In ${SP_SPELL_UI[res.key.root]}${res.key.minor ? ' minor' : ' major'}. Sing it your way over the chords; I’ll measure tuning, steadiness and the range you use, and help you find a key that suits you.`,
+        tags: { guitar: ['From your recording'], voice: ['Your own version'] }, user: true };
+      s.bpm = Math.round(clamp(240 / res.barSec, 40, 200)); s.secStart = res.secStart;
+      if (srcBlob) { try { await SongAudio.put(s.id, srcBlob); s.audio = true; } catch (err) { console.warn(err); } }
+      userSongs().push(s); Store.save(); toast(s.audio ? 'Saved. The recording plays along in Now Playing.' : 'Saved to your songs'); go('track', { id: s.id, intro: true });
+    }
+  });
+  onCleanup(() => { if (rec) { clearInterval(rec.iv); Engine.stopRecording(); Engine.stopMic(); } });
+};
+PARENT.breakdown = 'songs';
+
+// ---------- the original recording, kept on this device so you can play and sing along with it ----------
+function wavBlob(x, sr) {
+  const f = Math.max(1, Math.round(sr / 22050)), n = Math.floor(x.length / f), out = new DataView(new ArrayBuffer(44 + n * 2)), rate = Math.round(sr / f);
+  const w = (o, s) => [...s].forEach((c, i) => out.setUint8(o + i, c.charCodeAt(0)));
+  w(0, 'RIFF'); out.setUint32(4, 36 + n * 2, true); w(8, 'WAVEfmt '); out.setUint32(16, 16, true); out.setUint16(20, 1, true); out.setUint16(22, 1, true);
+  out.setUint32(24, rate, true); out.setUint32(28, rate * 2, true); out.setUint16(32, 2, true); out.setUint16(34, 16, true); w(36, 'data'); out.setUint32(40, n * 2, true);
+  for (let i = 0; i < n; i++) out.setInt16(44 + i * 2, Math.max(-1, Math.min(1, x[i * f])) * 32767, true);
+  return new Blob([out.buffer], { type: 'audio/wav' });
+}
+const SongAudio = {
+  db: null, cache: {},
+  open() { if (this.db) return Promise.resolve(this.db); return new Promise((res, rej) => { const r = indexedDB.open('vocal-studio-audio', 1); r.onupgradeneeded = () => r.result.createObjectStore('songs'); r.onsuccess = () => { this.db = r.result; res(this.db); }; r.onerror = () => rej(r.error); }); },
+  async put(id, blob) { const db = await this.open(); return new Promise((res, rej) => { const t = db.transaction('songs', 'readwrite'); t.objectStore('songs').put(blob, id); t.oncomplete = res; t.onerror = () => rej(t.error); }); },
+  async blob(id) { const db = await this.open(); return new Promise((res, rej) => { const r = db.transaction('songs').objectStore('songs').get(id); r.onsuccess = () => res(r.result || null); r.onerror = () => rej(r.error); }); },
+  async buffer(id) {
+    if (this.cache[id]) return this.cache[id];
+    const b = await this.blob(id); if (!b) return null;
+    await Engine.ensure();
+    const ab = await b.arrayBuffer();
+    const buf = await new Promise((res, rej) => { const p = Engine.ctx.decodeAudioData(ab, res, rej); if (p && p.then) p.then(res, rej); });
+    this.cache = { [id]: buf }; return buf;
+  },
+  async remove(id) { const db = await this.open(); return new Promise((res) => { const t = db.transaction('songs', 'readwrite'); t.objectStore('songs').delete(id); t.oncomplete = res; t.onerror = res; }); },
+  // play the recording from `from` seconds, starting at context time `when`, for `dur` seconds; returns a stop function
+  async play(id, when, from, dur) {
+    const buf = await this.buffer(id); if (!buf) return () => {};
+    const ctx = Engine.ctx, src = ctx.createBufferSource(), g = ctx.createGain();
+    src.buffer = buf; g.gain.value = 0.9; src.connect(g); g.connect(ctx.destination);
+    src.start(Math.max(ctx.currentTime, when), Math.max(0, from), dur ? dur + 0.3 : undefined);
+    const stop = () => { try { g.gain.setTargetAtTime(0, ctx.currentTime, 0.05); src.stop(ctx.currentTime + 0.2); } catch (e) {} };
+    (Engine._extStops = Engine._extStops || []).push(stop);
+    return stop;
+  },
+};
+// Engine.stopAll also stops the recording
+{ const _sa = Engine.stopAll.bind(Engine); Engine.stopAll = function () { (this._extStops || []).splice(0).forEach((f) => f()); return _sa(); }; }
 
 // boot last, after every view is defined
 boot();
