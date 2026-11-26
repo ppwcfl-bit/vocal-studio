@@ -8,9 +8,9 @@
 //  3. Settings → Variables and Secrets → add:
 //       ANTHROPIC_API_KEY  (type: Secret)  your key from console.anthropic.com
 //       APP_TOKEN          (type: Secret)  any long random phrase; you'll paste it into the app
-//       ALLOWED_ORIGIN     (type: Text)    the address you open the app at, e.g. https://your-site.netlify.app
+//       ALLOWED_ORIGIN     (type: Text)    the address you open the app at, exactly: https://ppwcfl-bit.github.io
 //       MODEL              (type: Text, optional) defaults to claude-sonnet-5-5
-//  4. In the app: Profile → AI coach → paste the worker address (https://vocal-coach.<you>.workers.dev) and the APP_TOKEN.
+//  4. In the app: Settings → AI coach → paste the worker address (https://vocal-coach.<you>.workers.dev) and the APP_TOKEN.
 
 export default {
   async fetch(request, env) {
