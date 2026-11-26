@@ -25,23 +25,15 @@ The first time you open it, a 4-step walkthrough sets your name and what you're 
 - Live pitch tracking, range test, vocal exercises, chord and strum checking, song practice (Sing, Play, Sing + Play), recording your take and playing it back.
 - The built-in teacher: spoken lessons, measured feedback after every attempt, and a coaching-cue library.
 
-## Optional: the AI teacher (free hosting, you pay Anthropic per use)
-Your API key goes on a small Cloudflare server, never in the app or in this repo. Nothing is stored on your phone or computer.
+## The AI coach (free)
+Home → **Connect your AI coach** → **Free (Google)**:
+1. Open https://aistudio.google.com/apikey, sign in with any Google account and tap **Create API key**. No card needed.
+2. Paste the key and tap **Save and test**. The coach says hello.
 
-1. Get an API key at https://console.anthropic.com → *API Keys* → *Create Key*. Add a little credit under *Billing*. Copy the key.
-2. Sign in at https://dash.cloudflare.com (the free plan is enough; you can sign in with GitHub).
-3. *Workers & Pages* → *Create* → *Create Worker* → name it `vocal-coach` → *Deploy*.
-4. *Edit code* → delete everything → paste all of [`server/coach-worker.js`](server/coach-worker.js) → *Deploy*.
-5. The worker's *Settings* → *Variables and Secrets* → *Add*:
-   | Name | Type | Value |
-   |---|---|---|
-   | `ANTHROPIC_API_KEY` | Secret | your key from step 1 |
-   | `APP_TOKEN` | Secret | any long phrase you make up |
-   | `ALLOWED_ORIGIN` | Text | `https://ppwcfl-bit.github.io` |
-   
-   Then *Deploy*.
-6. In the app: **You → Settings → AI coach** → paste the worker address (`https://vocal-coach.<your-subdomain>.workers.dev`) and the same `APP_TOKEN` → *Save*. The status changes to *Coach server set*.
-7. Open **Instructor** and say hello. Use the **Log** button to export a lesson transcript if something sounds off.
+The key stays on your phone. The free tier has daily limits (plenty for practice), and Google may use what's sent to improve its products. The app sends only text (scores, what you say), never audio. A paid Claude key also works, as does the Cloudflare server in `server/coach-worker.js`.
+
+## Sing along
+Song page or Now Playing → **Sing Along**. Paste the words (they stay on your phone), then press play: four clicks, then the lines scroll with the chords above them and a 3-2-1 before each line. Tap **Tap to time the words** once to make the timing exact. Leave **Coach listens** on and the coach talks you through your take afterwards.
 
 ## Honest limits
 - Songs come with chords and song structure only, not recordings or melody lines (licensing). Your voice is judged on pitch stability, key fit and timing against the chords, not note by note against the original singer.
