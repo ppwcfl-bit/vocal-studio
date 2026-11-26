@@ -9866,7 +9866,7 @@ function connectCoach() {
       $$('#cprov button', sh).forEach((b) => b.setAttribute('aria-pressed', b.dataset.pv === pv));
       $('#cpv', sh).innerHTML = pv === 'gemini'
         ? `<ol class="how"><li><b>Get a free key</b><span>Open <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a>, sign in with any Google account, tap <b>Create API key</b> and copy it. No card needed.</span></li><li><b>Paste it here</b><span>It’s saved only on this phone.</span></li></ol>
-           <label class="field">Google AI key<input type="password" id="ck" value="${esc(p.geminiKey || '')}" placeholder="AIza…" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
+           <label class="field">Google AI key<input type="password" id="ck" value="${esc(p.geminiKey || '')}" placeholder="Paste your Google AI key" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
            <p class="fine">Free tier: there are daily limits (plenty for practice), and Google may use what you send to improve its products. The app sends only text, like your scores and what you say, never your audio.</p>`
         : `<ol class="how"><li><b>Get a key</b><span>Open <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">console.anthropic.com</a>, add credit under Billing, then Create Key.</span></li><li><b>Paste it here</b><span>Saved only on this phone.</span></li></ol>
            <label class="field">Anthropic API key<input type="password" id="ck" value="${esc(p.apiKey || '')}" placeholder="sk-ant-…" autocomplete="off" autocapitalize="off" spellcheck="false"></label>`;
@@ -9876,8 +9876,8 @@ function connectCoach() {
     $('[data-x]', sh).addEventListener('click', close);
     const rm = $('[data-rm]', sh); if (rm) rm.addEventListener('click', () => { p.apiKey = ''; p.geminiKey = ''; p.geminiModel = ''; Store.save(); close(); toast('AI coach disconnected'); });
     $('[data-ok]', sh).addEventListener('click', async () => {
-      const k = $('#ck', sh).value.trim(), out = $('#cko', sh);
-      if (pv === 'gemini') { if (!/^AIza[\w-]{20,}$/.test(k)) { out.innerHTML = '<span class="chip">That doesn’t look like a Google AI key</span> It starts with AIza.'; return; } p.geminiKey = k; p.geminiModel = ''; }
+      const k = $('#ck', sh).value.trim().replace(/^["'“”]+|["'“”]+$/g, ''), out = $('#cko', sh);
+      if (pv === 'gemini') { const kk = k.replace(/\s+/g, ''); if (kk.length < 20) { out.innerHTML = '<span class="chip">That key looks too short</span> Copy the whole key from Google AI Studio and paste it again.'; return; } if (/^sk-ant-/.test(kk)) { out.innerHTML = '<span class="chip">That’s a Claude key</span> Switch to “Claude (paid)” above, or paste your Google key.'; return; } p.geminiKey = kk; p.geminiModel = ''; }
       else { if (!/^sk-ant-/.test(k)) { out.innerHTML = '<span class="chip">That doesn’t look like an Anthropic key</span> It starts with sk-ant-.'; return; } p.apiKey = k; p.geminiKey = ''; }
       Store.save(); AudioUnlock.run();
       out.innerHTML = '<div class="bd-prog" style="margin:0"><div class="spinner"></div><span>Saying hello…</span></div>';
@@ -9885,7 +9885,7 @@ function connectCoach() {
         const t = await askAI(`You are a warm, upbeat singing and guitar coach meeting your student${p.name ? ' ' + p.name : ''} for the first time. Say hello in one or two short spoken sentences and ask what song they want to work on. No markdown.`);
         out.innerHTML = `<span class="chip ok">Connected</span> “${esc(t.trim())}”`;
         try { await Voice.init(); Voice.speak(t); } catch (e) {}
-      } catch (e) { out.innerHTML = `<span class="chip">Didn’t work</span> ${esc(e.message || 'Check the key and try again.')}`; }
+      } catch (e) { const m = String((e && e.message) || ''); const why = /failed to fetch|load failed|network/i.test(m) ? 'I couldn’t reach Google. Check your internet connection, and turn off any VPN or content blocker for this site.' : /api key not valid|invalid api key|API_KEY_INVALID/i.test(m) ? 'Google says that key isn’t valid. Copy it again from AI Studio. The copy button next to the key is the safest way.' : /permission|denied|not.*enabled|region|location|country/i.test(m) ? 'Google refused the request: ' + m + ' (The free API isn’t offered in every country, and some accounts need to accept the AI Studio terms first: open aistudio.google.com once and click through.)' : m || 'Check the key and try again.'; out.innerHTML = `<span class="chip">Didn’t work</span> ${esc(why)}<br><small class="muted">Google said: ${esc(m.slice(0, 200))}</small>`; }
     });
   });
 }
