@@ -31,7 +31,7 @@ Your API key goes on a small Cloudflare server, never in the app or in this repo
    | `ALLOWED_ORIGIN` | Text | `https://ppwcfl-bit.github.io` |
    
    Then *Deploy*.
-6. In the app: **Settings → AI coach** → paste the worker address (`https://vocal-coach.<your-subdomain>.workers.dev`) and the same `APP_TOKEN` → *Save*. The status changes to *Coach server set*.
+6. In the app: **You → Settings → AI coach** → paste the worker address (`https://vocal-coach.<your-subdomain>.workers.dev`) and the same `APP_TOKEN` → *Save*. The status changes to *Coach server set*.
 7. Open **Instructor** and say hello. Use the **Log** button to export a lesson transcript if something sounds off.
 
 ## Honest limits
