@@ -893,6 +893,16 @@ header.lt { display: flex; align-items: center; }
 .sa-sync { position: absolute; inset: auto 0 0 0; z-index: 5; padding: 18px 20px max(20px, env(safe-area-inset-bottom)); background: rgba(0,0,0,.82); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); display: flex; flex-direction: column; gap: 12px; align-items: center; text-align: center; }
 .sa-sync p { margin: 0; } .sa-sync .row .pill { color: #fff; background: rgba(255,255,255,.16); }
 .sa-tap { width: 100%; max-width: 360px; height: 120px; border-radius: 24px; border: 0; background: var(--accent); color: #fff; font-size: 34px; font-weight: 900; letter-spacing: .1em; touch-action: manipulation; } .sa-tap:active { transform: scale(.97); }
+/* voices + sing with your coach */
+.vpick { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 6px 0 12px; } .vpick .tp { padding: 10px; }
+.echo .coachdock { margin-top: 14px; } .echo .coachdock .cd-av { width: 96px; height: 104px; } .echo .cd-txt { font-size: 16px; }
+.echo-stage { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; padding: 20px; text-align: center; }
+.echo-note { font-family: var(--display); font-size: clamp(40px, 12vw, 64px); font-weight: 800; letter-spacing: -0.02em; }
+.echo-meter { position: relative; width: min(340px, 86%); height: 14px; border-radius: 7px; background: linear-gradient(90deg, rgba(255,90,90,.55), rgba(48,209,88,.8) 42%, rgba(48,209,88,.8) 58%, rgba(255,90,90,.55)); }
+.echo-meter .mid { position: absolute; left: 50%; top: -6px; bottom: -6px; width: 2px; background: #fff; }
+.echo-meter b { position: absolute; top: -7px; left: calc(50% - 7px); width: 14px; height: 28px; border-radius: 7px; background: #fff; box-shadow: 0 2px 10px rgba(0,0,0,.4); transition: left .08s; font-size: 0; }
+.echo-meter b.ok { background: #30D158; } .echo-msg { opacity: .85; max-width: 32ch; } #enl { display: none; }
+.echo-score { font-weight: 700; opacity: .85; }
 </style>
 <div class="app">
   <nav class="tabs" id="tabs" aria-label="Main">
@@ -1577,7 +1587,7 @@ const Engine = {
   playSeq(notes, at, opts) {
     opts = opts || {};
     if ((Store.data.profile.tone || 'voice') === 'voice' && !opts.plain) {
-      const nodes = vxRender(this.ctx, this.master, notes.filter((n) => n.midi != null), at, { a4: Store.a4(), glide: opts.glide, vowel: opts.vowel });
+      const nodes = vxRender(this.ctx, this.master, notes.filter((n) => n.midi != null), at, { a4: Store.a4(), glide: opts.glide, vowel: opts.vowel, voice: opts.voice || coachSingVoice() });
       this.scheduled.push(...nodes.nodes);
       return nodes.end;
     }
@@ -1668,6 +1678,7 @@ function vxVowelOf(lyric, fallback) {
   return fallback || 'ah';
 }
 let _vxWave = null, _vxWaveCtx = null;
+let _vxNoise = null, _vxRoom = null;
 function vxRender(ctx, dest, notes, at, opts) {
   opts = opts || {};
   const a4 = opts.a4 || 440, nodes = [];
@@ -1691,9 +1702,13 @@ function vxRender(ctx, dest, notes, at, opts) {
   }
   // vibrato on notes longer than 0.7 s
   const lfo = ctx.createOscillator(), lfoG = ctx.createGain();
-  lfo.frequency.value = 5.3; lfoG.gain.value = 0;
+  lfo.frequency.value = 5.1 + Math.random() * 0.6; lfoG.gain.value = 0;
   lfo.connect(lfoG); lfoG.connect(osc.detune);
   for (const n of notes) if (n.dur > 0.7) { const a = t0 + n.start + 0.35, b = t0 + n.start + n.dur - 0.05; lfoG.gain.setValueAtTime(0, a); lfoG.gain.linearRampToValueAtTime(18, a + 0.3); lfoG.gain.setValueAtTime(18, b - 0.05); lfoG.gain.linearRampToValueAtTime(0, b); }
+  // human touches: a slow natural pitch drift, and a small scoop into each new (non-glided) note
+  const drift = ctx.createOscillator(), driftG = ctx.createGain(); drift.frequency.value = 0.55 + Math.random() * 0.3; driftG.gain.value = opts.plainPitch ? 0 : 4; drift.connect(driftG); driftG.connect(osc.detune);
+  if (!opts.glide && !opts.plainPitch) notes.forEach((n, i) => { const ts = t0 + n.start; if (i === 0 || n.midi !== notes[i - 1].midi) { osc.detune.setValueAtTime(-38, ts); osc.detune.setTargetAtTime(0, ts + 0.01, 0.04); } });
+  const fs = opts.voice === 'f' ? 1.13 : 1;
   // formant bank
   const mix = ctx.createGain(); mix.gain.value = 1;
   const bp = [0, 1, 2].map((k) => { const b = ctx.createBiquadFilter(); b.type = 'bandpass'; const g = ctx.createGain(); g.gain.value = [1.0, 0.55, 0.22][k]; osc.connect(b); b.connect(g); g.connect(mix); return b; });
@@ -1708,15 +1723,21 @@ function vxRender(ctx, dest, notes, at, opts) {
   const trLfo = ctx.createOscillator(), trDepth = ctx.createGain(); trLfo.frequency.value = 24; trDepth.gain.value = 0; trLfo.connect(trDepth); trDepth.connect(trill.gain);
   mix.connect(trill); trill.connect(env);
   const out = ctx.createGain(); out.gain.value = 0.55; env.connect(out); out.connect(dest);
+  // breath: a little shaped noise that follows the voice
+  if (!_vxNoise || _vxNoise.sampleRate !== ctx.sampleRate) { _vxNoise = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate); const d = _vxNoise.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; }
+  const nz = ctx.createBufferSource(); nz.buffer = _vxNoise; nz.loop = true; const nzF = ctx.createBiquadFilter(); nzF.type = 'bandpass'; nzF.frequency.value = 2600 * fs; nzF.Q.value = 0.7; const nzG = ctx.createGain(); nzG.gain.value = 0.03; nz.connect(nzF); nzF.connect(nzG); nzG.connect(env);
+  // a small room around the voice
+  if (!_vxRoom || _vxRoom.context !== ctx) { const len = Math.floor(ctx.sampleRate * 1.1), ir = ctx.createBuffer(2, len, ctx.sampleRate); for (let c = 0; c < 2; c++) { const d = ir.getChannelData(c); for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 2.6); } _vxRoom = ctx.createConvolver(); _vxRoom.buffer = ir; const wet = ctx.createGain(); wet.gain.value = 0.16; _vxRoom.connect(wet); wet.connect(dest); }
+  out.connect(_vxRoom);
   const setVowel = (v, ts) => {
     const isHum = v === 'mm', isTrill = v === 'brrr';
     const F = VX_VOWELS[isTrill ? 'oo' : isHum ? 'oo' : v] || VX_VOWELS.ah;
-    bp.forEach((b, k) => { b.frequency.setTargetAtTime(F[k][0], ts, 0.02); b.Q.setValueAtTime(F[k][0] / F[k][1], ts); });
+    bp.forEach((b, k) => { b.frequency.setTargetAtTime(F[k][0] * fs, ts, 0.02); b.Q.setValueAtTime(F[k][0] / F[k][1], ts); });
     bp.forEach((b) => {});
     humG.gain.setTargetAtTime(isHum ? 1.6 : 0, ts, 0.02);
     mix.gain.setTargetAtTime(1, ts, 0.02);
     trDepth.gain.setTargetAtTime(isTrill ? 0.75 : 0, ts, 0.02);
-    bp.forEach((b, k) => b.frequency.setTargetAtTime(isHum ? [250, 900, 2200][k] : F[k][0], ts, 0.02));
+    bp.forEach((b, k) => b.frequency.setTargetAtTime(isHum ? [250, 900, 2200][k] * fs : F[k][0] * fs, ts, 0.02));
   };
   let prevV = null;
   notes.forEach((n, i) => {
@@ -1732,10 +1753,13 @@ function vxRender(ctx, dest, notes, at, opts) {
   });
   env.gain.setValueAtTime(0.9, Math.max(t0 + last.start + 0.07, end - 0.08));
   env.gain.linearRampToValueAtTime(0, end);
-  osc.start(t0 + first.start); osc.stop(end + 0.05); lfo.start(t0); lfo.stop(end + 0.05); trLfo.start(t0); trLfo.stop(end + 0.05);
-  nodes.push(osc, lfo, trLfo);
+  osc.start(t0 + first.start); osc.stop(end + 0.05); lfo.start(t0); lfo.stop(end + 0.05); trLfo.start(t0); trLfo.stop(end + 0.05); drift.start(t0); drift.stop(end + 0.05); nz.start(t0); nz.stop(end + 0.05);
+  nodes.push(osc, lfo, trLfo, drift, nz);
   return { nodes, end };
 }
+
+// The coach sings in a voice type near yours: a higher voice if your comfortable middle is above G3.
+function coachSingVoice() { try { const p = Store.data.profile; if (p.coachSing === 'm' || p.coachSing === 'f') return p.coachSing; const mid = (p.rangeLow + p.rangeHigh) / 2; return mid >= 56 ? 'f' : 'm'; } catch (e) { return 'm'; } }
 
 // ===================== Exercise library =====================
 const DEG = { 1: 0, 2: 2, 3: 4, 4: 5, 5: 7, 6: 9, 7: 11, 8: 12 };
@@ -8664,6 +8688,7 @@ function relevantCues() {
   return CUES.filter((c) => issues.has(c.issue)).slice(0, 12).map((c) => ({ id: c.id, forIssue: c.issue, feel: c.feel, listenFor: c.listen, avoid: c.avoid, image: c.image, exercise: c.ex || null, demo: c.demo || null }));
 }
 const PLAYBOOK = `HOW YOU TEACH (follow this every turn):
+VOICE AND TONE: You are talking OUT LOUD to a real person who is learning. Sound like a warm, upbeat human coach, not a report: contractions, short sentences, genuine excitement when something goes well ("Oh, that was lovely!"), calm reassurance when it doesn't ("That's totally normal, we'll fix it"). Use the student's name now and then. Describe pitch in words ("just a touch flat", "right on it") rather than reading out numbers, unless they ask for numbers. Celebrate effort and progress. Never sarcastic, never clinical.
 0. MAKE IT THEIRS. Never grade or coach the student toward sounding like the original artist. The goal is their own version: a key that suits their range, their natural tone, and their own choices of phrasing, dynamics, rhythm and strumming. Measure technique (tuning, steadiness, timing, clean chords); treat style as the student's choice and help them make it on purpose.
 1. ONE focus at a time. In a practice loop every reply gives (a) the one thing to pay attention to, phrased as something to FEEL, LISTEN FOR or IMAGINE, (b) why, in one plain sentence, and (c) an invitation to try it now, usually with an ACTION so the app listens.
 2. After a MEASUREMENT: first what genuinely went well or improved, with the number (compare with previousAttempt when present: say "closer", "same", "a bit further" honestly); then the single most important fix; then the cue for the next try; then ask them to go again with an ACTION. Never more than one correction per turn. No generic praise.
@@ -9163,7 +9188,7 @@ function avatarSVG() {
     <path class="av-mouth" d="M106 139 Q120 146 134 139 Q120 146 106 139 Z" fill="#6B2430" stroke="#9E4A4F" stroke-width="2" stroke-linejoin="round"/>
   </g></svg>`;
 }
-let _kick = 0;
+let _kick = 0; const AVLIP = { v: 0, t: 0 };
 function avatarKick() { _kick = 1; }
 function startAvatar(el, stateFn) {
   const svg = $('.av', el); if (!svg) return;
@@ -9172,10 +9197,12 @@ function startAvatar(el, stateFn) {
   let open = 0, nextBlink = performance.now() + 2500, blinkT = 0, raf = 0;
   const frame = (now) => {
     const t = now / 1000, s = stateFn ? stateFn() : INSTR.state;
-    const talking = s === 'speaking' || s === 'demo';
+    const talking = s === 'speaking' || s === 'demo' || s === 'singing';
     // speech: syllable-rate mouth movement, nudged by word boundaries when the voice reports them
     let target = 0;
     if (talking) { const syl = Math.max(0, Math.sin(t * 15.5) * 0.6 + Math.sin(t * 9.1 + 1) * 0.4); target = (0.25 + 0.75 * syl) * (0.55 + 0.45 * Math.abs(Math.sin(t * 2.3))) + _kick * 0.5; }
+    if (talking && AVLIP.t > now - 120) target = Math.min(1.2, AVLIP.v * 1.1);
+    if (s === 'singing') target = Math.max(target, 0.75 + Math.sin(t * 5.5) * 0.08);
     _kick *= 0.86;
     open += (Math.min(1.2, target) - open) * 0.45;
     const o = open * 11, w = 14 - open * 2.5;
@@ -9860,6 +9887,7 @@ function connectCoach() {
     <div class="seg" id="cprov"><button data-pv="gemini" aria-pressed="true">Free (Google)</button><button data-pv="claude" aria-pressed="false">Claude (paid)</button></div>
     <div id="cpv"></div>
     <div class="tour-out" id="cko">${p.geminiKey || p.apiKey || p.coachUrl ? '<span class="chip ok">Connected</span>' : ''}</div>
+    <button class="pill sm" data-voice>${icon('mic')}Choose your coach’s voice</button>
     <div class="row"><button class="btn ghost" data-x>Close</button>${p.geminiKey || p.apiKey ? '<button class="btn ghost" data-rm>Disconnect</button>' : ''}<button class="btn primary" data-ok style="flex:1">Save and test</button></div>`, (sh, close) => {
     let pv = 'gemini';
     const draw = () => {
@@ -9931,6 +9959,236 @@ document.addEventListener('click', (e) => { if (e.target.closest('[data-connect]
     add(); new MutationObserver(add).observe(el, { childList: true });
     el.addEventListener('click', (e) => { if (e.target.closest('[data-sa2]')) { e.stopPropagation(); go('singalong', { id: params.id }); } }, true);
   };
+}
+
+// ===================== A human coach: natural voice, warm words, and a coach who sings =====================
+
+// ---------- natural speech from Google's voices (free with the same key as the AI coach) ----------
+const COACH_VOICES = [
+  ['Achird', 'Friendly'], ['Sulafat', 'Warm'], ['Puck', 'Upbeat'], ['Laomedeia', 'Upbeat'],
+  ['Aoede', 'Breezy'], ['Callirrhoe', 'Easy-going'], ['Vindemiatrix', 'Gentle'], ['Zephyr', 'Bright'],
+];
+const COACH_STYLE = 'Warm, encouraging and genuinely upbeat, like a friendly singing coach talking to a student they believe in. Natural and conversational, relaxed pace, smiling.';
+function findAudioB64(o, depth) {
+  if (!o || typeof o !== 'object' || (depth || 0) > 8) return null;
+  if (o.type === 'audio' && typeof o.data === 'string') return o.data;
+  const inl = o.inlineData || o.inline_data; if (inl && typeof inl.data === 'string' && /audio/i.test(inl.mimeType || inl.mime_type || 'audio')) return inl.data;
+  let found = null;
+  for (const v of Array.isArray(o) ? o : Object.values(o)) { const r = findAudioB64(v, (depth || 0) + 1); if (r) found = r; }
+  return found;
+}
+const GVoice = {
+  off: 0, cache: new Map(), src: null, tok: 0, _m: null,
+  ok() { const p = Store.data.profile; return !!p.geminiKey && p.naturalVoice !== false && Date.now() > this.off; },
+  voice() { return Store.data.profile.coachVoiceG || 'Achird'; },
+  async model() {
+    if (this._m) return this._m;
+    let m = null;
+    try {
+      const r = await fetch('https://generativelanguage.googleapis.com/v1beta/models?pageSize=200', { headers: { 'x-goog-api-key': Store.data.profile.geminiKey } });
+      const j = await r.json();
+      const ver = (n) => { const x = /gemini-(\d+(?:\.\d+)?)/.exec(n); return x ? +x[1] : 0; };
+      const c = (j.models || []).map((x) => x.name.replace(/^models\//, '')).filter((n) => /tts/i.test(n) && !/pro/i.test(n));
+      c.sort((a, b) => (/lite/.test(a) ? 1 : 0) - (/lite/.test(b) ? 1 : 0) || (/preview/.test(a) ? 1 : 0) - (/preview/.test(b) ? 1 : 0) || ver(b) - ver(a));
+      m = c[0] || null;
+    } catch (e) {}
+    return (this._m = m || 'gemini-3.8-flash-tts');
+  },
+  async fetchAudio(text) {
+    const key = Store.data.profile.geminiKey, model = await this.model(), voice = this.voice();
+    const H = { 'content-type': 'application/json', 'x-goog-api-key': key };
+    let r = await fetch('https://generativelanguage.googleapis.com/v1beta/interactions', { method: 'POST', headers: H, body: JSON.stringify({
+      model, input: [{ type: 'user_input', content: [{ type: 'text', text, annotations: [{ type: 'speech_metadata', style: COACH_STYLE }] }] }],
+      response_format: { type: 'audio' }, generation_config: { speech_config: [{ voice }] } }) });
+    if (r.status === 404 || r.status === 400) { // older API shape
+      r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, { method: 'POST', headers: H, body: JSON.stringify({
+        contents: [{ parts: [{ text: `Say this in a warm, encouraging, natural voice, like a friendly singing coach: ${text}` }] }],
+        generationConfig: { responseModalities: ['AUDIO'], speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: voice } } } } }) });
+    }
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) { if (r.status === 429 || r.status === 403) this.off = Date.now() + 10 * 60e3; throw new Error((j.error && j.error.message) || 'voice ' + r.status); }
+    const b64 = findAudioB64(j); if (!b64) throw new Error('No audio in the reply.');
+    const bin = atob(b64), bytes = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    await Engine.ensure();
+    const ctx = Engine.ctx;
+    if (bytes[0] === 0x52 && bytes[1] === 0x49 && bytes[2] === 0x46 && bytes[3] === 0x46) return await new Promise((res, rej) => { const pr = ctx.decodeAudioData(bytes.buffer, res, rej); if (pr && pr.then) pr.then(res, rej); });
+    const n = bytes.length >> 1, dv = new DataView(bytes.buffer), buf = ctx.createBuffer(1, n, 24000), d = buf.getChannelData(0);
+    for (let i = 0; i < n; i++) d[i] = dv.getInt16(i * 2, true) / 32768;
+    return buf;
+  },
+  async speak(text) {
+    const tok = ++this.tok;
+    let buf = this.cache.get(text);
+    if (!buf) { buf = await this.fetchAudio(text); if (this.cache.size > 40) this.cache.clear(); this.cache.set(text, buf); }
+    if (tok !== this.tok) return;
+    const ctx = Engine.ctx; if (ctx.state !== 'running') { try { await ctx.resume(); } catch (e) {} }
+    const src = ctx.createBufferSource(), an = ctx.createAnalyser(), g = ctx.createGain();
+    src.buffer = buf; an.fftSize = 1024; g.gain.value = 1.0;
+    src.connect(g); g.connect(an); an.connect(ctx.destination);
+    this.src = src;
+    const data = new Float32Array(an.fftSize);
+    let raf = 0; const lip = () => { an.getFloatTimeDomainData(data); let s = 0; for (let i = 0; i < data.length; i += 4) s += data[i] * data[i]; AVLIP.v = Math.min(1.2, Math.sqrt(s / (data.length / 4)) * 9); AVLIP.t = performance.now(); raf = requestAnimationFrame(lip); };
+    try { Say._set(true); } catch (e) {}
+    await new Promise((res) => { src.onended = res; src.start(); lip(); });
+    cancelAnimationFrame(raf); AVLIP.v = 0; if (this.src === src) this.src = null;
+    try { Say._set(false); } catch (e) {}
+  },
+  stop() { this.tok++; try { this.src && this.src.stop(); } catch (e) {} this.src = null; },
+};
+
+// Speak numbers the way a person would.
+function humanize(t) {
+  const amt = (n) => (n <= 8 ? 'right on it, maybe a hair' : n <= 15 ? 'just a touch' : n <= 30 ? 'a little' : n <= 60 ? 'quite a bit' : 'a lot');
+  return String(t)
+    .replace(/[+−-]?(\d+)\s*(?:¢|cents?)\s*(flat|sharp)/gi, (m, n, d) => `${amt(+n)} ${d.toLowerCase()}`)
+    .replace(/(\d+)\s*(?:¢|cents?)\s*away/gi, (m, n) => (+n <= 10 ? 'basically perfect' : +n <= 20 ? 'really close' : 'a bit off'))
+    .replace(/\bwobble (\d+)\s*(?:¢|cents?)/gi, (m, n) => (+n <= 15 ? 'nice and steady' : 'a bit wobbly'))
+    .replace(/\bscore(?:d)? (?:of )?(\d+)\b/gi, '$1')
+    .replace(/\s+/g, ' ').trim();
+}
+{
+  const _speak = Voice.speak.bind(Voice), _stop = Voice.stop.bind(Voice);
+  Voice.speak = async function (text) {
+    const t = humanize(text);
+    if (Store.data.profile.coachMuted) return _speak(t);
+    if (GVoice.ok()) { try { await Engine.ensure(); return await GVoice.speak(speakable(t).slice(0, 1500)); } catch (e) { console.warn('natural voice unavailable, using device voice', e); } }
+    return _speak(t);
+  };
+  Voice.stop = function () { GVoice.stop(); return _stop(); };
+  const _name = Voice.name.bind(Voice);
+  Voice.name = function () { return GVoice.ok() ? 'natural voice' : _name(); };
+}
+// ---------- the coach's personality (the AI's tone rules live in PLAYBOOK) ----------
+const PRAISE = { great: ['Oh, that was really good!', 'Yes! That’s the one.', 'Love that. Really nice.', 'Now we’re talking!'], ok: ['Nice work, that’s coming together.', 'Good one! We’re getting there.', 'That’s solid. Let’s make it even better.'], low: ['Okay, good effort. That’s exactly how it starts.', 'That’s a start, and starts are the hard part.', 'Totally normal for a first go. Let’s fix one thing.'] };
+const pickOne = (a) => a[Math.floor(Math.random() * a.length)];
+const AGAIN = ['Let’s go again.', 'Give it another go. You’ve got this.', 'Run it one more time for me.', 'Again, and enjoy it this time.'];
+{
+  const _after = Coach.afterTake.bind(Coach);
+  Coach.afterTake = async function (o) {
+    if (await aiAvailable()) return _after(o);
+    const lead = o.score == null ? 'Okay.' : o.score >= 85 ? pickOne(PRAISE.great) : o.score >= 65 ? pickOne(PRAISE.ok) : pickOne(PRAISE.low);
+    const tip = o.tips && o.tips[0];
+    const text = `${lead} ${tip ? 'One thing for next time: ' + tip.h.charAt(0).toLowerCase() + tip.h.slice(1) + '. ' + tip.b : ''} ${pickOne(AGAIN)}`;
+    return this.say(text.replace(/\.\./g, '.').replace(/\s+/g, ' ').trim());
+  };
+}
+
+// ---------- choose the coach's voice ----------
+function voiceSheet() {
+  const p = Store.data.profile;
+  sheet(`<h3>Your coach’s voice</h3>
+    ${p.geminiKey ? '' : '<div class="notice">Natural voices come with the free AI coach. <button class="link" data-connect>Connect it</button> first. Until then I use your phone’s built-in voice.</div>'}
+    <div class="vpick">${COACH_VOICES.map(([v, d]) => `<button class="tp ${GVoice.voice() === v ? 'on' : ''}" data-vv="${v}">${icon('mic')}<b>${v}</b><small>${d}</small></button>`).join('')}</div>
+    <label class="field">The voice I sing notes in<div class="seg" id="sv">${[['', 'Match my range'], ['m', 'Lower'], ['f', 'Higher']].map(([k, l]) => `<button data-sv="${k}" aria-pressed="${(p.coachSing || '') === k}">${l}</button>`).join('')}</div></label>
+    <button class="btn ghost" data-singtest>${icon('play')}Hear me sing</button>
+    <p class="fine">On iPhone, the built-in voice sounds much better if you download a Premium voice: Settings → Accessibility → Spoken Content → Voices → English.</p>
+    <div class="row"><button class="btn primary" data-x style="flex:1">Done</button></div>`, (sh, close) => {
+    $('[data-x]', sh).addEventListener('click', close);
+    sh.addEventListener('click', async (e) => {
+      const b = e.target.closest('button'); if (!b) return;
+      if (b.dataset.vv) { p.coachVoiceG = b.dataset.vv; Store.save(); $$('[data-vv]', sh).forEach((x) => x.classList.toggle('on', x === b)); AudioUnlock.run(); Voice.stop(); Voice.speak(`Hi${p.name ? ' ' + p.name : ''}! This is how I’d sound as your coach. Ready to sing?`); }
+      if (b.dataset.sv != null) { p.coachSing = b.dataset.sv; Store.save(); $$('[data-sv]', sh).forEach((x) => x.setAttribute('aria-pressed', x === b)); }
+      if (b.matches('[data-singtest]')) { AudioUnlock.run(); await Engine.ensure(); Engine.stopAll(); const r = rangeOf(), m = r.mid - 4; Engine.playSeq([0, 2, 4, 5, 7, 4, 0].map((s, i) => ({ midi: m + s, start: i * 0.5, dur: i === 6 ? 1.4 : 0.5, lyric: 'ah' })), Engine.ctx.currentTime + 0.1, {}); }
+    });
+  });
+}
+document.addEventListener('click', (e) => { if (e.target.closest('[data-voice]')) { e.preventDefault(); voiceSheet(); } });
+
+// ---------- Sing with your coach: the coach sings, you sing it back ----------
+VIEWS.echo = (el) => {
+  const p = Store.data.profile, r = rangeOf();
+  const lo = Math.max(r.low + 2, r.mid - 5), hi = Math.min(r.high - 2, r.mid + 5);
+  let level = p.echoLevel || 1, target = null, running = false, streak = 0, tries = 0, sig = null;
+  const LV = { 1: 'Single notes', 2: 'Two-note steps', 3: 'Three-note patterns' };
+  el.innerHTML = `<section class="sa echo" style="--t1:#1b1d33;--t2:#4b2a6b;--t3:#a8345e;--tl:#ffd6e0">
+    <div class="np-bg"><i></i><i></i><i></i><i></i></div>
+    <header class="sa-top"><button class="np-x" data-close aria-label="Back">${icon('down2')}</button><span class="np-label"><small>SING WITH YOUR COACH</small><b id="elv">${LV[level]}</b></span><button class="np-x" data-voice aria-label="Coach voice">${icon('mic')}</button></header>
+    ${Coach.html(false)}
+    <div class="echo-stage"><div class="echo-note" id="en">–</div><div class="echo-meter"><i class="mid"></i><b id="enl"></b></div><div class="echo-msg" id="em">I sing, you sing it back. Any octave is fine.</div></div>
+    <div class="sa-ctrl"><button class="np-main" id="go" aria-label="Start">${icon('play')}</button>
+      <div class="sa-opts"><div class="seg sm" id="lvl">${[1, 2, 3].map((k) => `<button data-lv="${k}" aria-pressed="${k === level}">${['Notes', 'Steps', 'Patterns'][k - 1]}</button>`).join('')}</div><div class="echo-score" id="es">Streak 0</div></div></div>
+  </section>`;
+  Coach.mount(el);
+  const say = (t) => Coach.say(t);
+  if (AudioUnlock.done) setTimeout(() => say(`Let’s match some notes${p.name ? ', ' + p.name : ''}. I’ll sing one, then it’s your turn. Don’t worry about sounding perfect, just copy what you hear.`), 300);
+  else Coach.caption('Tap play and I’ll sing you a note.');
+  const newTarget = () => {
+    const base = lo + Math.floor(Math.random() * Math.max(1, hi - lo - 3));
+    const steps = level === 1 ? [0] : level === 2 ? [0, [2, -2, 3, 4, -3][Math.floor(Math.random() * 5)]] : [[0, 2, 4], [0, 4, 7], [0, -1, 0], [4, 2, 0], [0, 5, 4]][Math.floor(Math.random() * 5)];
+    return steps.map((s) => clamp(base + s, r.low, r.high));
+  };
+  const coachSings = async (notes) => {
+    await Engine.ensure(); Engine.stopMic();
+    const nd = notes.length === 1 ? 1.6 : 0.75, t = Engine.ctx.currentTime + 0.15;
+    $('#en', el).textContent = notes.map(pcName).join(' · ');
+    Coach.state = 'singing'; Coach.caption('Listen…');
+    const end = Engine.playSeq(notes.map((m, i) => ({ midi: m, start: i * nd, dur: nd + (i === notes.length - 1 ? 0.2 : 0), lyric: 'ah' })), t, {});
+    await waitCtx(end + 0.15); Coach.state = 'idle';
+    return nd;
+  };
+  const listenBack = async (notes, nd) => {
+    Coach.caption('Your turn!'); Coach.state = 'listening';
+    if (!(await micOrNotice($('#em', el)))) { Coach.state = 'idle'; return null; }
+    const dur = notes.length * nd + 1.3, frames = [], t0 = Engine.ctx.currentTime;
+    const meter = $('.echo-meter b', el), lbl = $('#enl', el);
+    const off = Engine.onFrame((f) => {
+      const t = Engine.ctx.currentTime - t0; if (!f.voiced) return; frames.push({ t, midi: f.midi });
+      const i = Math.min(notes.length - 1, Math.floor(Math.max(0, t - 0.25) / nd)); let c = (f.midi - notes[i]) * 100; c -= Math.round(c / 1200) * 1200;
+      const x = clamp(c, -100, 100); meter.style.left = `calc(${50 + x / 2}% - 7px)`; meter.className = Math.abs(c) <= 20 ? 'ok' : c < 0 ? 'flat' : 'sharp';
+      lbl.textContent = Math.abs(c) <= 15 ? 'on it' : c < 0 ? 'a little low' : 'a little high';
+    });
+    await waitCtx(t0 + dur, sig); off(); Engine.stopMic(); Coach.state = 'idle';
+    if (frames.length < 12) return { heard: false };
+    // per note: median cents in that note's window (octave-free)
+    const res = notes.map((m, i) => { const w = frames.filter((f) => f.t >= i * nd + 0.15 && f.t < (i + 1) * nd + (i === notes.length - 1 ? 1 : 0.1)); if (w.length < 5) return null; let c = median(w.map((f) => (f.midi - m) * 100)); c -= Math.round(c / 1200) * 1200; return c; });
+    return { heard: true, res };
+  };
+  const react = async (out) => {
+    if (!out) return;
+    if (!out.heard) { await say(pickOne(['I didn’t quite hear you there. Sing it back nice and clear, on “ah”.', 'Hmm, I missed that one. A little louder for me?'])); return false; }
+    const got = out.res.filter((c) => c != null), worst = got.length ? got.reduce((a, c) => (Math.abs(c) > Math.abs(a) ? c : a), 0) : 999, miss = out.res.length - got.length;
+    const ok = miss === 0 && Math.abs(worst) <= 25;
+    if (ok) { streak++; $('#es', el).textContent = `Streak ${streak}`; await say(pickOne(Math.abs(worst) <= 12 ? ['Spot on! Beautiful.', 'Nailed it!', 'Yes! Right on the note.', 'Perfect. Your ear is good.'] : ['Really close, nice!', 'That’s it, lovely.', 'Good! Right in the pocket.'])); return true; }
+    streak = 0; $('#es', el).textContent = 'Streak 0';
+    const bad = out.res.findIndex((c) => c == null || Math.abs(c) > 25), c = out.res[bad];
+    const which = out.res.length > 1 ? ['first', 'second', 'third'][bad] + ' note' : 'note';
+    await say(c == null ? `I didn’t catch the ${which}. Let’s try that again.` : c < 0 ? `So close. The ${which} was ${Math.abs(c) > 60 ? 'a bit' : 'just a touch'} low. Lift it a little, and keep the air moving. Here it is again.` : `Nearly! The ${which} was ${Math.abs(c) > 60 ? 'a bit' : 'just a touch'} high. Relax and let it settle down onto the note. Again!`);
+    return false;
+  };
+  const loop = async () => {
+    running = true; sig = { aborted: false }; App.abort = sig; $('#go', el).innerHTML = icon('stop'); el.querySelector('.sa').classList.add('playing');
+    AudioUnlock.run(); await Engine.ensure();
+    try {
+      while (running) {
+        if (!target || tries >= 3) { target = newTarget(); tries = 0; }
+        const nd = await coachSings(target); if (!running) break;
+        const out = await listenBack(target, nd); if (!running || !out) break;
+        const ok = await react(out); tries++;
+        if (ok) { target = null; if (streak && streak % 4 === 0 && level < 3) { level++; p.echoLevel = level; Store.save(); $('#elv', el).textContent = LV[level]; $$('[data-lv]', el).forEach((x) => x.setAttribute('aria-pressed', +x.dataset.lv === level)); await say(`Four in a row! Let’s level up: ${LV[level].toLowerCase()}.`); } }
+        await sleep(300);
+      }
+    } catch (e) { if (!(e instanceof Aborted)) console.error(e); }
+    running = false; Engine.stopMic(); $('#go', el).innerHTML = icon('play'); el.querySelector('.sa') && el.querySelector('.sa').classList.remove('playing');
+    Store.addSession({ inst: 'voice', type: 'echo', title: 'Sing with your coach', seconds: 60 });
+  };
+  el.addEventListener('click', (e) => {
+    const b = e.target.closest('button'); if (!b) return;
+    if (b.matches('[data-close]')) { running = false; if (sig) sig.aborted = true; Coach.stop(); return go('practice'); }
+    if (b.id === 'go') { if (running) { running = false; if (sig) sig.aborted = true; Engine.stopAll(); Coach.stop(); return; } return loop(); }
+    if (b.dataset.lv) { level = +b.dataset.lv; p.echoLevel = level; Store.save(); target = null; $('#elv', el).textContent = LV[level]; $$('[data-lv]', el).forEach((x) => x.setAttribute('aria-pressed', x === b)); }
+  });
+  onCleanup(() => { running = false; if (sig) sig.aborted = true; Engine.stopMic(); Coach.stop(); });
+};
+PARENT.echo = 'practice';
+
+// entry points: Practice, Home (singing), Instructor's "Match a note"
+{
+  const prev = VIEWS.practice;
+  VIEWS.practice = (el, params) => { prev(el, params); if (focus() === 'guitar') return; const g = $('.group', el); if (g) g.insertAdjacentHTML('afterbegin', `<button class="grow" data-echo><span class="ico" style="background:#FF2D55">${icon('mic')}</span><span>Sing With Your Coach</span><small>Match the notes I sing</small>${icon('chev')}</button>`); $('[data-echo]', el) && $('[data-echo]', el).addEventListener('click', (e) => { e.stopPropagation(); go('echo'); }); };
+  const prevH = VIEWS.home;
+  VIEWS.home = (el, params) => { prevH(el, params); const s = [...$$('.tstep', el)].find((b) => /Check your pitch|Warm up your voice/.test(b.innerText)); if (s && focus() !== 'guitar') { s.dataset.plan = JSON.stringify({ v: 'echo' }); s.querySelector('b').textContent = 'Sing with your coach'; s.querySelector('small').textContent = 'I sing a note, you match it'; } };
+  const prevI = VIEWS.instructor;
+  VIEWS.instructor = (el, params) => { prevI(el, params); const t = $('[data-tool="note"]', el); if (t) { t.removeAttribute('data-tool'); t.dataset.echo = '1'; t.querySelector('span').textContent = 'Sing with me'; t.addEventListener('click', (e) => { e.stopPropagation(); go('echo'); }); } const h = $('.studio-head .row', el); if (h && !$('[data-voice]', h)) h.insertAdjacentHTML('afterbegin', `<button class="chip glass" data-voice>Voice</button>`); };
 }
 
 // boot last, after every view is defined
