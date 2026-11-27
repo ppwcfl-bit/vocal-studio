@@ -903,6 +903,16 @@ header.lt { display: flex; align-items: center; }
 .echo-meter b { position: absolute; top: -7px; left: calc(50% - 7px); width: 14px; height: 28px; border-radius: 7px; background: #fff; box-shadow: 0 2px 10px rgba(0,0,0,.4); transition: left .08s; font-size: 0; }
 .echo-meter b.ok { background: #30D158; } .echo-msg { opacity: .85; max-width: 32ch; } #enl { display: none; }
 .echo-score { font-weight: 700; opacity: .85; }
+/* capture my voice */
+.mv-intro, .mv-done { max-width: 34ch; text-align: left; display: flex; flex-direction: column; gap: 10px; font-size: 16px; line-height: 1.45; }
+.mv-done { text-align: center; align-items: center; } .mv-done > b { font-size: 26px; font-family: var(--display); }
+.mv-tips { margin: 0; padding-left: 18px; opacity: .85; font-size: 14.5px; } .mv-have { opacity: .8; font-size: 14px; }
+.mv-ctrl { flex-wrap: wrap; justify-content: center; gap: 10px; } .mv-ctrl .btn { min-height: 48px; } .mv-ctrl .btn.ghost { color: #fff; border-color: rgba(255,255,255,.4); }
+.btn.big { font-size: 17px; padding: 0 26px; }
+.mv-bar { width: min(340px, 86%); height: 6px; border-radius: 3px; background: rgba(255,255,255,.18); overflow: hidden; } .mv-bar i { display: block; height: 100%; width: 0; background: #fff; }
+.mv-caps { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; min-height: 28px; }
+.mv .seg { display: flex; background: rgba(255,255,255,.14); border-radius: 10px; padding: 3px; } .mv .seg button { flex: 1; border: 0; background: none; color: #fff; padding: 8px 12px; border-radius: 8px; font-weight: 600; } .mv .seg button[aria-pressed="true"] { background: #fff; color: #111; }
+.gvs { margin-top: 4px; } .gv-row { display: flex; align-items: center; gap: 10px; padding: 8px 16px; font-size: 14px; }
 </style>
 <div class="app">
   <nav class="tabs" id="tabs" aria-label="Main">
@@ -8343,8 +8353,8 @@ VIEWS.me = VIEWS.you;
 updateMini = function () {
   let bar = $('#mini');
   const song = App.nowSong && findSong(App.nowSong);
-  document.body.classList.toggle('np-open', App.view === 'player' || App.view === 'singalong');
-  if (!song || ['player', 'singalong', 'breakdown', 'welcome', 'instructor', 'track'].includes(App.view)) { if (bar) bar.hidden = true; return; }
+  document.body.classList.toggle('np-open', ['player', 'singalong', 'echo', 'myvoice'].includes(App.view));
+  if (!song || ['player', 'singalong', 'echo', 'myvoice', 'breakdown', 'welcome', 'instructor', 'track'].includes(App.view)) { if (bar) bar.hidden = true; return; }
   if (!bar) {
     bar = document.createElement('div'); bar.id = 'mini'; bar.className = 'mini'; $('.app').insertBefore(bar, $('#tabs'));
     bar.addEventListener('click', (e) => { const s = findSong(App.nowSong); if (!s) return; if (e.target.closest('[data-mp]')) return go('player', { id: s.id, mode: 'listen' }); go('player', { id: s.id }); });
@@ -9647,7 +9657,7 @@ function wavBlob(x, sr) {
 }
 const SongAudio = {
   db: null, cache: {},
-  open() { if (this.db) return Promise.resolve(this.db); return new Promise((res, rej) => { const r = indexedDB.open('vocal-studio-audio', 1); r.onupgradeneeded = () => r.result.createObjectStore('songs'); r.onsuccess = () => { this.db = r.result; res(this.db); }; r.onerror = () => rej(r.error); }); },
+  open() { if (this.db) return Promise.resolve(this.db); return new Promise((res, rej) => { const r = indexedDB.open('vocal-studio-audio', 2); r.onupgradeneeded = () => { const db = r.result; if (!db.objectStoreNames.contains('songs')) db.createObjectStore('songs'); if (!db.objectStoreNames.contains('voice')) db.createObjectStore('voice'); }; r.onsuccess = () => { this.db = r.result; res(this.db); }; r.onerror = () => rej(r.error); }); },
   async put(id, blob) { const db = await this.open(); return new Promise((res, rej) => { const t = db.transaction('songs', 'readwrite'); t.objectStore('songs').put(blob, id); t.oncomplete = res; t.onerror = () => rej(t.error); }); },
   async blob(id) { const db = await this.open(); return new Promise((res, rej) => { const r = db.transaction('songs').objectStore('songs').get(id); r.onsuccess = () => res(r.result || null); r.onerror = () => rej(r.error); }); },
   async buffer(id) {
@@ -10189,6 +10199,279 @@ PARENT.echo = 'practice';
   VIEWS.home = (el, params) => { prevH(el, params); const s = [...$$('.tstep', el)].find((b) => /Check your pitch|Warm up your voice/.test(b.innerText)); if (s && focus() !== 'guitar') { s.dataset.plan = JSON.stringify({ v: 'echo' }); s.querySelector('b').textContent = 'Sing with your coach'; s.querySelector('small').textContent = 'I sing a note, you match it'; } };
   const prevI = VIEWS.instructor;
   VIEWS.instructor = (el, params) => { prevI(el, params); const t = $('[data-tool="note"]', el); if (t) { t.removeAttribute('data-tool'); t.dataset.echo = '1'; t.querySelector('span').textContent = 'Sing with me'; t.addEventListener('click', (e) => { e.stopPropagation(); go('echo'); }); } const h = $('.studio-head .row', el); if (h && !$('[data-voice]', h)) h.insertAdjacentHTML('afterbegin', `<button class="chip glass" data-voice>Voice</button>`); };
+}
+
+// ===================== My Voice: your own recorded voice, retuned to any note, as the guide =====================
+// The capture session records you holding "ah" on notes across your range. Each recording is trimmed to its
+// steadiest part, its exact pitch is measured, and it's kept on this device. To sing a note, the nearest recording
+// is retuned with pitch-synchronous overlap-add (PSOLA), which changes pitch while keeping your tone (formants).
+// It sings vowels, not words. Retuning more than ~5 semitones starts to sound less like you, so captures are 3 apart.
+
+// ---------- analysis of one held note ----------
+function mvTrack(x, sr) {
+  const N = 2048, hop = Math.round(sr * 0.01), nsdf = new Float32Array(N), buf = new Float32Array(N), out = [];
+  for (let s = 0; s + N < x.length; s += hop) {
+    let e = 0; for (let i = 0; i < N; i++) { buf[i] = x[s + i]; e += buf[i] * buf[i]; }
+    const rms = Math.sqrt(e / N);
+    const [f, c] = rms > 0.004 ? pcMPM(buf, N, sr, 70, 1100, nsdf) : [0, 0];
+    out.push({ i: s + N / 2, f: c > 0.82 && f > 0 ? f : 0, rms });
+  }
+  return out;
+}
+// Longest steady stretch (pitch within ±40 cents of its own median), trimmed; null if under 0.7 s.
+function mvSteady(x, sr) {
+  const tr = mvTrack(x, sr), voiced = tr.filter((t) => t.f);
+  if (voiced.length < 40) return null;
+  const m = (f) => 69 + 12 * Math.log2(f / 440);
+  // runs of frames near a running centre; short glitches (octave slips, a breath of noise) don't break a run
+  let best = null, a = -1, bad = 0, ref = null, recent = [];
+  for (let b = 0; b <= tr.length; b++) {
+    const t = tr[b], ok = t && t.f && (ref == null || Math.abs(m(t.f) - ref) <= 0.45);
+    if (ok) { if (a < 0) { a = b; recent = []; } recent.push(m(t.f)); if (recent.length > 30) recent.shift(); ref = median(recent); bad = 0; continue; }
+    if (a >= 0 && t && ++bad <= 5) continue;
+    if (a >= 0) { const e = b - bad; if (!best || e - a > best[1] - best[0]) best = [a, e]; }
+    a = -1; bad = 0; ref = t && t.f ? m(t.f) : null; recent = [];
+    if (t && t.f) { a = b; recent = [m(t.f)]; }
+  }
+  if (!best) return null;
+  let [s, e] = best; const trim = 12; s += trim; e -= trim;
+  if (e - s < 60) return null; // < 0.6 s of usable note
+  e = Math.min(e, s + 220);     // keep at most 2.2 s
+  const seg0 = tr.slice(s, e), mid0 = median(seg0.filter((t) => t.f).map((t) => m(t.f))), seg = seg0.map((t) => (t.f && Math.abs(m(t.f) - mid0) <= 0.45 ? t : { ...t, f: 0 })), midi = median(seg.filter((t) => t.f).map((t) => m(t.f)));
+  const i0 = seg[0].i, i1 = seg[seg.length - 1].i;
+  const data = x.slice(i0, i1);
+  let pk = 0; for (let i = 0; i < data.length; i++) pk = Math.max(pk, Math.abs(data[i]));
+  const g = pk > 0 ? 0.7 / pk : 1; for (let i = 0; i < data.length; i++) data[i] *= g;
+  const steadiness = std(seg.filter((t) => t.f).map((t) => m(t.f) * 100));
+  const fMid = 440 * Math.pow(2, (midi - 69) / 12);
+  return { midi, data, sr, f0: seg.map((t) => ({ i: t.i - i0, f: t.f || fMid })), steadiness };
+}
+// Pitch marks: one per glottal cycle, on the waveform peak, following the measured pitch.
+function mvMarks(d, sr, f0) {
+  const fAt = (i) => { let k = 0; while (k + 1 < f0.length && f0[k + 1].i <= i) k++; return f0[k].f || f0.find((x) => x.f).f; };
+  const marks = []; let P = sr / fAt(0), i = 0, best = 0;
+  for (let k = 0; k < P && k < d.length; k++) if (Math.abs(d[k]) > Math.abs(d[best])) best = k;
+  i = best;
+  while (i < d.length) {
+    marks.push(i); P = sr / fAt(i);
+    const c = Math.round(i + P), w = Math.round(P * 0.15);
+    let b = c; for (let k = Math.max(i + 1, c - w); k <= Math.min(d.length - 1, c + w); k++) if (Math.sign(d[k]) === Math.sign(d[i]) && Math.abs(d[k]) > Math.abs(d[b] || 0)) b = k;
+    if (b <= i) b = c; i = b;
+  }
+  return marks;
+}
+
+// ---------- PSOLA: your note, at any pitch and length ----------
+function mvRender(sample, targetMidi, dur, sr) {
+  const d = sample.data, M = sample.marks, srIn = sample.sr;
+  const outLen = Math.ceil(dur * sr) + Math.ceil(0.12 * sr), out = new Float32Array(outLen), wsum = new Float32Array(outLen);
+  const ratio = sr / srIn, fT = 440 * Math.pow(2, (targetMidi - 69) / 12);
+  const inLen = d.length / srIn, loopA = inLen * 0.15, loopB = inLen * 0.85;
+  // source time: first pass plays straight through; longer notes ping-pong across the steady middle
+  const srcT = (t) => { if (t < loopB) return t; const span = loopB - loopA, k = (t - loopB) / span, ph = k - Math.floor(k); return Math.floor(k) % 2 === 0 ? loopB - ph * span : loopA + ph * span; };
+  let mi = 0, t = 0;
+  while (t * sr < outLen - 1) {
+    const vib = t > 0.45 ? 1 + 0.0055 * Math.sin(2 * Math.PI * 5.4 * (t - 0.45)) * Math.min(1, (t - 0.45) / 0.4) : 1; // gentle vibrato on held notes
+    const Pout = sr / (fT * vib);
+    const s = srcT(t) * srIn;
+    while (mi + 1 < M.length && Math.abs(M[mi + 1] - s) <= Math.abs(M[mi] - s)) mi++;
+    while (mi > 0 && Math.abs(M[mi - 1] - s) < Math.abs(M[mi] - s)) mi--;
+    const c = M[mi], Pin = (M[Math.min(M.length - 1, mi + 1)] - M[Math.max(0, mi - 1)]) / 2 || Pout / ratio;
+    const half = Math.round(Pin), oc = Math.round(t * sr);
+    for (let k = -half; k <= half; k++) {
+      const si = c + k; if (si < 0 || si >= d.length) continue;
+      const w = 0.5 + 0.5 * Math.cos((Math.PI * k) / half);
+      const oi = oc + Math.round(k * ratio); if (oi < 0 || oi >= outLen) continue;
+      out[oi] += d[si] * w; wsum[oi] += w;
+    }
+    t += Pout / sr;
+  }
+  for (let i = 0; i < outLen; i++) if (wsum[i] > 0.15) out[i] /= Math.max(1, wsum[i]);
+  const end = Math.ceil(dur * sr), fi = Math.ceil(0.05 * sr), fo = Math.ceil(Math.min(0.12, dur * 0.3) * sr);
+  for (let i = 0; i < fi; i++) out[i] *= i / fi;
+  for (let i = 0; i < outLen; i++) { const k = i - (end - fo); if (k > 0) out[i] *= Math.max(0, 1 - k / fo); }
+  return out;
+}
+
+const MyVoice = {
+  samples: [], loaded: false, cache: new Map(),
+  async load() {
+    if (this.loaded) return this.samples;
+    try {
+      const db = await SongAudio.open();
+      const list = await new Promise((res) => { const r = db.transaction('voice').objectStore('voice').get('ah'); r.onsuccess = () => res(r.result || []); r.onerror = () => res([]); });
+      this.samples = list.map((s) => ({ ...s, data: new Float32Array(s.data), marks: s.marks ? Int32Array.from(s.marks) : null }));
+      this.samples.forEach((s) => { if (!s.marks) s.marks = Int32Array.from(mvMarks(s.data, s.sr, s.f0)); });
+    } catch (e) { this.samples = []; }
+    this.loaded = true; return this.samples;
+  },
+  async save(list) {
+    const db = await SongAudio.open();
+    const plain = list.map((s) => ({ midi: s.midi, sr: s.sr, f0: s.f0, steadiness: s.steadiness, data: s.data.buffer.slice(0), marks: Array.from(s.marks) }));
+    await new Promise((res, rej) => { const t = db.transaction('voice', 'readwrite'); t.objectStore('voice').put(plain, 'ah'); t.oncomplete = res; t.onerror = () => rej(t.error); });
+    this.samples = list; this.loaded = true; this.cache.clear();
+  },
+  async clear() { try { const db = await SongAudio.open(); await new Promise((res) => { const t = db.transaction('voice', 'readwrite'); t.objectStore('voice').delete('ah'); t.oncomplete = res; t.onerror = res; }); } catch (e) {} this.samples = []; this.cache.clear(); },
+  has() { return this.samples.length > 0; },
+  active() { return this.has() && Store.data.profile.guideVoice === 'mine'; },
+  coverage() { if (!this.has()) return null; const m = this.samples.map((s) => s.midi); return { low: Math.min(...m), high: Math.max(...m) }; },
+  nearest(midi) { return this.samples.reduce((a, s) => (Math.abs(s.midi - midi) < Math.abs(a.midi - midi) ? s : a)); },
+  canSing(midi) { const c = this.coverage(); return c && midi >= c.low - 6 && midi <= c.high + 6; },
+  note(midi, dur) {
+    const key = Math.round(midi * 100) + '|' + Math.round(dur * 100), ctx = Engine.ctx;
+    if (this.cache.has(key)) return this.cache.get(key);
+    const s = this.nearest(midi), y = mvRender(s, midi + (Store.a4() !== 440 ? 12 * Math.log2(Store.a4() / 440) : 0), dur, ctx.sampleRate);
+    const b = ctx.createBuffer(1, y.length, ctx.sampleRate); b.getChannelData(0).set(y);
+    if (this.cache.size > 200) this.cache.clear();
+    this.cache.set(key, b); return b;
+  },
+  playSeq(notes, at) {
+    const ctx = Engine.ctx, t0 = Math.max(at, ctx.currentTime + 0.02), nodes = []; let end = t0;
+    const out = ctx.createGain(); out.gain.value = 0.9; out.connect(Engine.master);
+    notes.forEach((n, i) => {
+      if (n.midi == null) return;
+      const next = notes[i + 1], legato = next && next.midi != null && Math.abs(next.start - (n.start + n.dur)) < 0.02;
+      const b = this.note(n.midi, n.dur + (legato ? 0.06 : 0));
+      const src = ctx.createBufferSource(); src.buffer = b; src.connect(out); src.start(t0 + n.start);
+      nodes.push(src); end = Math.max(end, t0 + n.start + n.dur);
+    });
+    return { nodes, end };
+  },
+};
+// Every place the coach sings a melody (exercises, Sing With Your Coach, song guides) uses your voice when it's on.
+{
+  const _ps = Engine.playSeq.bind(Engine);
+  Engine.playSeq = function (notes, at, opts) {
+    opts = opts || {};
+    const sing = notes.filter((n) => n.midi != null);
+    const vowelOK = sing.every((n) => { const v = vxVowelOf(n.lyric, opts.vowel); return v !== 'mm' && v !== 'brrr'; });
+    if (MyVoice.active() && !opts.plain && !opts.glide && vowelOK && sing.length && sing.every((n) => MyVoice.canSing(n.midi)) && (Store.data.profile.tone || 'voice') === 'voice') {
+      const r = MyVoice.playSeq(notes, at); this.scheduled.push(...r.nodes); return r.end;
+    }
+    return _ps(notes, at, opts);
+  };
+}
+MyVoice.load();
+
+// ---------- the capture session ----------
+VIEWS.myvoice = (el) => {
+  const p = Store.data.profile;
+  let caps = [], running = false, sig = null;
+  const draw = (stage, extra) => {
+    el.innerHTML = `<section class="sa echo mv" style="--t1:#14243a;--t2:#244a6b;--t3:#7a3a8c;--tl:#d9ecff">
+      <div class="np-bg"><i></i><i></i><i></i><i></i></div>
+      <header class="sa-top"><button class="np-x" data-close aria-label="Back">${icon('down2')}</button><span class="np-label"><small>VOICE PLACEMENT</small><b>Capture My Voice</b></span><span style="width:44px"></span></header>
+      ${Coach.html(false)}
+      <div class="echo-stage">${stage}</div>${extra || ''}</section>`;
+    Coach.mount(el);
+  };
+  const intro = () => {
+    const c = MyVoice.coverage();
+    draw(`<div class="mv-intro"><p>I’ll play a note, you hold it on an easy <b>“ah”</b> for about three seconds. We’ll do that up and down your range. Then I can sing <b>in your own voice</b>, perfectly in tune, so you hear exactly how <i>you</i> sound when you hit it.</p>
+      <ul class="mv-tips"><li>Quiet room, phone about an arm’s length away</li><li>Comfortable volume. Don’t push for high notes</li><li>Everything stays on this phone</li></ul>
+      ${c ? `<p class="mv-have">You have ${MyVoice.samples.length} notes saved (${pcName(c.low)} to ${pcName(c.high)}).</p>` : ''}</div>`,
+      `<div class="sa-ctrl mv-ctrl"><button class="btn primary big" data-start>${icon('mic')}${c ? 'Record again' : 'Start'}</button>${c ? `<button class="btn ghost" data-hear>${icon('play')}Hear my voice sing</button>` : ''}</div>`);
+    if (AudioUnlock.done) Coach.say(c ? 'Want to hear yourself, or record a fresh set?' : `This is a fun one${p.name ? ', ' + p.name : ''}. I’m going to learn your voice. Just hold each note I play on an easy “ah”. Nothing fancy.`);
+    else Coach.caption('I’m going to learn your voice. Tap Start when you’re ready.');
+  };
+  const holdNote = async (target, label) => {
+    $('#mvn', el).textContent = target != null ? pcName(target) : 'Any note';
+    $('#mvs', el).textContent = label;
+    await Engine.ensure(); Engine.stopMic();
+    if (target != null) { Coach.state = 'singing'; const end = vxRender(Engine.ctx, Engine.master, [{ midi: target, start: 0, dur: 1.3, lyric: 'ah' }], Engine.ctx.currentTime + 0.1, { a4: Store.a4(), voice: coachSingVoice() }).end; await waitCtx(end + 0.15, sig); Coach.state = 'idle'; }
+    if (!(await micOrNotice($('#mvs', el)))) throw new Aborted();
+    Coach.state = 'listening'; $('#mvs', el).textContent = 'Hold it… “ahhh”';
+    Engine.startRecording();
+    const t0 = Engine.ctx.currentTime, bar = $('#mvbar i', el), meter = $('.echo-meter b', el);
+    const off = Engine.onFrame((f) => { const k = (Engine.ctx.currentTime - t0) / 3.2; bar.style.width = Math.min(100, k * 100) + '%'; if (f.voiced && target != null) { let c = (f.midi - target) * 100; c -= Math.round(c / 1200) * 1200; meter.style.left = `calc(${50 + clamp(c, -100, 100) / 2}% - 7px)`; meter.className = Math.abs(c) < 30 ? 'ok' : ''; } });
+    await waitCtx(t0 + 3.2, sig); off();
+    const r = Engine.stopRecording(); Engine.stopMic(); Coach.state = 'idle';
+    if (!r) return null;
+    const lat = Math.max(0, Math.round(((r.offset || 0) + 0.25) * r.sr));
+    return mvSteady(r.samples.subarray(Math.min(lat, r.samples.length - 1)), r.sr);
+  };
+  const session = async () => {
+    running = true; sig = { aborted: false }; App.abort = sig; caps = [];
+    draw(`<div class="echo-note" id="mvn">–</div><div class="echo-meter"><i class="mid"></i><b></b></div><div class="mv-bar" id="mvbar"><i></i></div><div class="echo-msg" id="mvs"></div><div class="mv-caps" id="mvc"></div>`,
+      `<div class="sa-ctrl mv-ctrl"><button class="btn ghost" data-stop>Stop</button></div>`);
+    const chips = () => { $('#mvc', el).innerHTML = caps.map((c) => `<span class="chip ok">${pcName(c.midi)}</span>`).join(''); };
+    try {
+      let center;
+      if (p.rangeTested && p.rangeLow && p.rangeHigh) center = Math.round((p.rangeLow + p.rangeHigh) / 2);
+      else {
+        await Coach.say('First, sing any comfortable note on “ah” and hold it. Wherever feels easy.');
+        const s = await holdNote(null, 'Sing any easy note');
+        if (!s) { await Coach.say('I didn’t catch a steady note there. Let’s try that again, a little louder and nice and steady.'); return session(); }
+        caps.push(s); chips(); center = Math.round(s.midi);
+      }
+      await Coach.say('Great. Now I’ll play a note, and you hold it right after me.');
+      const lo = p.rangeTested ? Math.max(p.rangeLow + 1, center - 12) : center - 9, hi = p.rangeTested ? Math.min(p.rangeHigh - 1, center + 12) : center + 9;
+      const plan = []; for (let m = center; m <= hi; m += 3) plan.push(m); for (let m = center - 3; m >= lo; m -= 3) plan.push(m);
+      let stopUp = false, stopDown = false;
+      for (const target of plan) {
+        if (sig.aborted) break;
+        const up = target >= center; if ((up && stopUp) || (!up && stopDown)) continue;
+        if (caps.some((c) => Math.abs(c.midi - target) < 1.2)) continue;
+        let s = await holdNote(target, up ? 'Going up' : 'Coming down');
+        const dup = (x) => x && caps.some((c) => Math.abs(c.midi - x.midi) < 1.5) && Math.abs(((x.midi - target) % 12 + 18) % 12 - 6) > 1.5;
+        if (!s || dup(s)) { await Coach.say(pickOne(['No worries, once more. Match my note.', 'Let’s try that one again, nice and easy.'])); s = await holdNote(target, 'Once more'); }
+        if (s && Math.abs(((s.midi - target) % 12 + 18) % 12 - 6) > 1.5 && !caps.some((c) => Math.abs(c.midi - s.midi) < 1.5)) { caps.push(s); chips(); continue; } // a steady different note is still your voice: keep it
+        if (!s || caps.some((c) => Math.abs(c.midi - s.midi) < 1.5)) { if (up) stopUp = true; else stopDown = true; await Coach.say(up ? 'That’s the top of your comfortable zone for now. Perfect, no pushing. Let’s go down.' : 'That’s low enough. Nice.'); continue; }
+        caps.push(s); chips();
+        if (caps.length % 3 === 0) Coach.say(pickOne(['Lovely.', 'Sounding great.', 'Nice and steady.', 'Perfect.']));
+      }
+      if (caps.length < 2) { await Coach.say('I need at least two clear notes to learn your voice. Let’s try again in a quiet spot.'); running = false; return intro(); }
+      caps.forEach((c) => { c.marks = Int32Array.from(mvMarks(c.data, c.sr, c.f0)); });
+      caps.sort((a, b) => a.midi - b.midi);
+      await MyVoice.save(caps);
+      p.guideVoice = 'mine'; p.voiceLow = Math.round(caps[0].midi); p.voiceHigh = Math.round(caps[caps.length - 1].midi); Store.save();
+      running = false; done();
+    } catch (e) { running = false; Engine.stopMic(); console.warn('capture stopped:', e && (e.stack || e)); if (!(e instanceof Aborted)) toast('Something went wrong recording. Try again.'); intro(); }
+  };
+  const done = () => {
+    const c = MyVoice.coverage();
+    draw(`<div class="mv-done"><b>Got your voice!</b><p>${MyVoice.samples.length} notes, ${pcName(c.low)} to ${pcName(c.high)}. From now on when I sing a note or a melody, you’ll hear <b>yourself</b>, perfectly in tune.</p>
+      <div class="seg" id="gv"><button data-gv="mine" aria-pressed="${p.guideVoice === 'mine'}">My voice</button><button data-gv="coach" aria-pressed="${p.guideVoice !== 'mine'}">Coach’s voice</button></div></div>`,
+      `<div class="sa-ctrl mv-ctrl"><button class="btn primary big" data-hear>${icon('play')}Hear my voice sing</button><button class="btn ghost" data-echo>Sing with it</button><button class="btn ghost" data-start>Redo</button></div>`);
+    Coach.say('Okay, listen to this. That’s you.').then(() => hear());
+  };
+  const hear = async () => {
+    AudioUnlock.run(); await Engine.ensure(); Engine.stopAll();
+    const was = p.guideVoice; p.guideVoice = 'mine';
+    const c = MyVoice.coverage(), base = Math.round(Math.max(c.low, Math.min(c.high - 7, (c.low + c.high) / 2 - 4)));
+    const end = Engine.playSeq([0, 2, 4, 5, 7, 4, 2, 0].map((s, i) => ({ midi: base + s, start: i * 0.48, dur: i === 7 ? 1.5 : 0.48, lyric: 'ah' })), Engine.ctx.currentTime + 0.1, {});
+    p.guideVoice = was;
+    Coach.state = 'singing'; await waitCtx(end + 0.1); Coach.state = 'idle';
+  };
+  el.addEventListener('click', (e) => {
+    const b = e.target.closest('button'); if (!b) return;
+    if (b.matches('[data-close]')) { if (sig) sig.aborted = true; Coach.stop(); return go(App.prevView && App.prevView !== 'myvoice' ? App.prevView : 'practice'); }
+    if (b.matches('[data-start]')) { AudioUnlock.run(); return session(); }
+    if (b.matches('[data-stop]')) { if (sig) sig.aborted = true; Engine.stopAll(); Coach.stop(); return; }
+    if (b.matches('[data-hear]')) return hear();
+    if (b.matches('[data-echo]')) return go('echo');
+    if (b.dataset.gv) { p.guideVoice = b.dataset.gv; Store.save(); $$('#gv button', el).forEach((x) => x.setAttribute('aria-pressed', x === b)); }
+  });
+  onCleanup(() => { if (sig) sig.aborted = true; Engine.stopMic(); Coach.stop(); });
+  MyVoice.load().then(intro);
+};
+PARENT.myvoice = 'practice';
+
+// ---------- switches where it matters ----------
+const guideSwitch = () => MyVoice.has()
+  ? `<div class="seg sm gvs">${[['mine', 'My voice'], ['coach', 'Coach']].map(([k, l]) => `<button data-gv2="${k}" aria-pressed="${(Store.data.profile.guideVoice === 'mine') === (k === 'mine')}">${l}</button>`).join('')}</div>`
+  : `<button class="pill sm" data-mv>${icon('mic')}Hear notes in my own voice</button>`;
+document.addEventListener('click', (e) => {
+  const g = e.target.closest('[data-gv2]'); if (g) { e.preventDefault(); e.stopPropagation(); Store.data.profile.guideVoice = g.dataset.gv2; Store.save(); $$('[data-gv2]').forEach((x) => x.setAttribute('aria-pressed', x === g)); toast(g.dataset.gv2 === 'mine' ? 'Guide notes in your own voice' : 'Guide notes in the coach’s voice'); return; }
+  if (e.target.closest('[data-mv]')) { e.preventDefault(); e.stopPropagation(); go('myvoice'); }
+}, true);
+{
+  const prevE = VIEWS.echo;
+  VIEWS.echo = (el, params) => { prevE(el, params); const o = $('.sa-opts', el); if (o) o.insertAdjacentHTML('beforeend', guideSwitch()); };
+  const prevP = VIEWS.practice;
+  VIEWS.practice = (el, params) => { prevP(el, params); if (focus() === 'guitar') return; const g = $('.group', el); if (g) g.insertAdjacentHTML('afterbegin', `<button class="grow" data-mv><span class="ico" style="background:#5E5CE6">${icon('mic')}</span><span>Capture My Voice</span><small>${MyVoice.has() ? 'Your voice is saved: hear it or redo' : 'Hear guide notes in your own voice'}</small>${icon('chev')}</button>`); };
+  const prevSP = VIEWS.spsong;
+  if (prevSP) VIEWS.spsong = (el, params) => { prevSP(el, params); const h = $('header', el) || el.firstElementChild; if (h && MyVoice.has()) h.insertAdjacentHTML('afterend', `<div class="gv-row">Guide melody: ${guideSwitch()}</div>`); };
 }
 
 // boot last, after every view is defined

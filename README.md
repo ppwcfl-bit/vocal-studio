@@ -32,6 +32,9 @@ Home → **Connect your AI coach** → **Free (Google)**:
 
 The key stays on your phone. The free tier has daily limits (plenty for practice), and Google may use what's sent to improve its products. The app sends only text (scores, what you say), never audio. A paid Claude key also works, as does the Cloudflare server in `server/coach-worker.js`.
 
+## Capture My Voice
+Practice → **Capture My Voice**. The coach plays notes up and down your range and you hold each one on "ah" for 3 seconds. The app keeps the steadiest part of each, measures its exact pitch, and stores it on your phone. After that, whenever the coach sings a note or a melody (Sing With Your Coach, exercises, song guide melodies), you hear **your own voice**, retuned to the exact note while keeping your tone. Switch between *My voice* and *Coach* any time. It sings vowels, not words.
+
 ## Sing along
 Song page or Now Playing → **Sing Along**. Paste the words (they stay on your phone), then press play: four clicks, then the lines scroll with the chords above them and a 3-2-1 before each line. Tap **Tap to time the words** once to make the timing exact. Leave **Coach listens** on and the coach talks you through your take afterwards.
 
