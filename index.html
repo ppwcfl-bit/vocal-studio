@@ -2386,37 +2386,53 @@ async function askAI(prompt, onText) {
 
 // ---------- free option: Google Gemini (free tier with a Google account) ----------
 // The model list changes over time, so pick the newest general-purpose Flash model the key can use.
-async function geminiModel(key, fresh) {
+// Every Gemini text model this key can use, best first. When one is busy, the next is tried.
+async function geminiModels(key, fresh) {
   const p = Store.data.profile;
-  if (p.geminiModel && !fresh) return p.geminiModel;
+  if (!fresh && Array.isArray(p.geminiModels) && p.geminiModels.length) return p.geminiModels;
   const r = await fetch('https://generativelanguage.googleapis.com/v1beta/models?pageSize=200', { headers: { 'x-goog-api-key': key } });
   const j = await r.json().catch(() => ({}));
   if (!r.ok) throw new Error((j.error && j.error.message) || `Google returned an error (${r.status}).`);
   const ver = (n) => { const m = /gemini-(\d+(?:\.\d+)?)/.exec(n); return m ? +m[1] : 0; };
   const ok = (j.models || []).filter((m) => (m.supportedGenerationMethods || []).includes('generateContent') && /gemini/i.test(m.name) && !/image|tts|audio|live|embed|vision|robotics|computer|exp-\d|learnlm|gemma/i.test(m.name));
-  const rank = (m) => (/flash/i.test(m.name) ? 100 : 0) - (/lite/i.test(m.name) ? 5 : 0) - (/preview/i.test(m.name) ? 3 : 0) + ver(m.name) * 2 - (/pro/i.test(m.name) ? 50 : 0);
+  // stable Flash models first (they're the free workhorses), then Flash-Lite, then previews
+  const rank = (m) => (/flash/i.test(m.name) ? 100 : 0) - (/lite/i.test(m.name) ? 8 : 0) - (/preview|exp/i.test(m.name) ? 20 : 0) + ver(m.name) * 2 - (/pro/i.test(m.name) ? 60 : 0);
   ok.sort((a, b) => rank(b) - rank(a));
   if (!ok.length) throw new Error('No Gemini text model is available to this key.');
-  p.geminiModel = ok[0].name; Store.save();
-  return p.geminiModel;
+  p.geminiModels = ok.slice(0, 6).map((m) => m.name); Store.save();
+  return p.geminiModels;
 }
-async function geminiAsk(prompt, onText, retried) {
+async function geminiModel(key, fresh) { return (await geminiModels(key, fresh))[0]; }
+const busy = (status, msg) => status === 503 || status === 500 || status === 529 || /high demand|overloaded|unavailable|try again later/i.test(msg || '');
+async function geminiAsk(prompt, onText, refreshed) {
   const p = Store.data.profile, key = p.geminiKey;
-  const model = await geminiModel(key, retried);
-  const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/${model}:generateContent`, {
-    method: 'POST', headers: { 'content-type': 'application/json', 'x-goog-api-key': key },
-    body: JSON.stringify({ contents: [{ role: 'user', parts: [{ text: prompt }] }], generationConfig: { maxOutputTokens: 2048, temperature: 0.8 } }),
-  });
-  const j = await resp.json().catch(() => ({}));
-  if (!resp.ok) {
-    if (!retried && (resp.status === 404 || resp.status === 400 && /model/i.test((j.error && j.error.message) || ''))) return geminiAsk(prompt, onText, true);
-    if (resp.status === 429) throw new Error('The free AI limit is used up for the moment. Try again in a minute (daily limits reset overnight).');
-    throw new Error((j.error && j.error.message) || `Google returned an error (${resp.status}).`);
+  const models = await geminiModels(key, refreshed);
+  const order = p.geminiModel && models.includes(p.geminiModel) ? [p.geminiModel, ...models.filter((m) => m !== p.geminiModel)] : models;
+  let lastErr = null;
+  for (let i = 0; i < order.length; i++) {
+    const model = order[i];
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/${model}:generateContent`, {
+        method: 'POST', headers: { 'content-type': 'application/json', 'x-goog-api-key': key },
+        body: JSON.stringify({ contents: [{ role: 'user', parts: [{ text: prompt }] }], generationConfig: { maxOutputTokens: 2048, temperature: 0.8 } }),
+      });
+      const j = await resp.json().catch(() => ({}));
+      const msg = (j.error && j.error.message) || '';
+      if (resp.ok) {
+        const text = ((j.candidates && j.candidates[0] && j.candidates[0].content && j.candidates[0].content.parts) || []).filter((x) => x.text && !x.thought).map((x) => x.text).join('\n').trim();
+        if (!text) { lastErr = new Error('The AI returned an empty answer.'); break; }
+        if (p.geminiModel !== model) { p.geminiModel = model; Store.save(); }
+        if (onText) onText(text);
+        return text;
+      }
+      lastErr = new Error(msg || `Google returned an error (${resp.status}).`);
+      if (resp.status === 404 || (resp.status === 400 && /model/i.test(msg))) { if (!refreshed && i === order.length - 1) return geminiAsk(prompt, onText, true); break; } // model gone: next one
+      if (busy(resp.status, msg)) { if (attempt === 0) { await sleep(1200); continue; } break; }         // busy: wait once, then next model
+      if (resp.status === 429) { if (/per.?day|daily/i.test(msg)) throw new Error('Today’s free AI allowance is used up. It resets tomorrow.'); break; } // per-minute limit on this model: try another
+      throw lastErr; // a key problem etc.: no point trying other models
+    }
   }
-  const text = ((j.candidates && j.candidates[0] && j.candidates[0].content && j.candidates[0].content.parts) || []).filter((x) => x.text && !x.thought).map((x) => x.text).join('\n').trim();
-  if (!text) throw new Error('The AI returned an empty answer.');
-  if (onText) onText(text);
-  return text;
+  throw new Error(busy(503, lastErr && lastErr.message) ? 'Google’s free AI is very busy right now. Give it a minute and try again.' : (lastErr && lastErr.message) || 'The AI didn’t answer.');
 }
 
 // ===================== UI helpers and components =====================
@@ -9932,7 +9948,7 @@ function connectCoach() {
     const rm = $('[data-rm]', sh); if (rm) rm.addEventListener('click', () => { p.apiKey = ''; p.geminiKey = ''; p.geminiModel = ''; Store.save(); close(); toast('AI coach disconnected'); });
     $('[data-ok]', sh).addEventListener('click', async () => {
       const k = $('#ck', sh).value.trim().replace(/^["'“”]+|["'“”]+$/g, ''), out = $('#cko', sh);
-      if (pv === 'gemini') { const kk = k.replace(/\s+/g, ''); if (kk.length < 20) { out.innerHTML = '<span class="chip">That key looks too short</span> Copy the whole key from Google AI Studio and paste it again.'; return; } if (/^sk-ant-/.test(kk)) { out.innerHTML = '<span class="chip">That’s a Claude key</span> Switch to “Claude (paid)” above, or paste your Google key.'; return; } p.geminiKey = kk; p.geminiModel = ''; }
+      if (pv === 'gemini') { const kk = k.replace(/\s+/g, ''); if (kk.length < 20) { out.innerHTML = '<span class="chip">That key looks too short</span> Copy the whole key from Google AI Studio and paste it again.'; return; } if (/^sk-ant-/.test(kk)) { out.innerHTML = '<span class="chip">That’s a Claude key</span> Switch to “Claude (paid)” above, or paste your Google key.'; return; } p.geminiKey = kk; p.geminiModel = ''; p.geminiModels = null; }
       else { if (!/^sk-ant-/.test(k)) { out.innerHTML = '<span class="chip">That doesn’t look like an Anthropic key</span> It starts with sk-ant-.'; return; } p.apiKey = k; p.geminiKey = ''; }
       Store.save(); AudioUnlock.run();
       out.innerHTML = '<div class="bd-prog" style="margin:0"><div class="spinner"></div><span>Saying hello…</span></div>';
@@ -10017,12 +10033,20 @@ const GVoice = {
       const ver = (n) => { const x = /gemini-(\d+(?:\.\d+)?)/.exec(n); return x ? +x[1] : 0; };
       const c = (j.models || []).map((x) => x.name.replace(/^models\//, '')).filter((n) => /tts/i.test(n) && !/pro/i.test(n));
       c.sort((a, b) => (/lite/.test(a) ? 1 : 0) - (/lite/.test(b) ? 1 : 0) || (/preview/.test(a) ? 1 : 0) - (/preview/.test(b) ? 1 : 0) || ver(b) - ver(a));
-      m = c[0] || null;
+      m = c[0] || null; this._all = c;
     } catch (e) {}
     return (this._m = m || 'gemini-3.8-flash-tts');
   },
   async fetchAudio(text) {
-    const key = Store.data.profile.geminiKey, model = await this.model(), voice = this.voice();
+    await this.model();
+    let last = null;
+    for (const m of [this._m, ...(this._all || []).filter((x) => x !== this._m)].slice(0, 3)) {
+      try { const b = await this.fetchWith(text, m); this._m = m; return b; } catch (e) { last = e; if (!/high demand|overloaded|unavailable|503|500|try again/i.test(e.message || '')) throw e; }
+    }
+    throw last;
+  },
+  async fetchWith(text, model) {
+    const key = Store.data.profile.geminiKey, voice = this.voice();
     const H = { 'content-type': 'application/json', 'x-goog-api-key': key };
     let r = await fetch('https://generativelanguage.googleapis.com/v1beta/interactions', { method: 'POST', headers: H, body: JSON.stringify({
       model, input: [{ type: 'user_input', content: [{ type: 'text', text, annotations: [{ type: 'speech_metadata', style: COACH_STYLE }] }] }],
