@@ -913,6 +913,9 @@ header.lt { display: flex; align-items: center; }
 .mv-caps { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; min-height: 28px; }
 .mv .seg { display: flex; background: rgba(255,255,255,.14); border-radius: 10px; padding: 3px; } .mv .seg button { flex: 1; border: 0; background: none; color: #fff; padding: 8px 12px; border-radius: 8px; font-weight: 600; } .mv .seg button[aria-pressed="true"] { background: #fff; color: #111; }
 .gvs { margin-top: 4px; } .gv-row { display: flex; align-items: center; gap: 10px; padding: 8px 16px; font-size: 14px; }
+.easy { display: flex; flex-direction: column; gap: 10px; margin: 6px 0 10px; } .easy .btn { justify-content: flex-start; gap: 12px; min-height: 56px; text-decoration: none; }
+.easy .en { width: 28px; height: 28px; border-radius: 50%; background: rgba(255,255,255,.25); display: grid; place-items: center; font-weight: 800; flex: none; }
+.easy details summary { cursor: pointer; color: var(--accent); }
 </style>
 <div class="app">
   <nav class="tabs" id="tabs" aria-label="Main">
@@ -9903,14 +9906,28 @@ function connectCoach() {
     const draw = () => {
       $$('#cprov button', sh).forEach((b) => b.setAttribute('aria-pressed', b.dataset.pv === pv));
       $('#cpv', sh).innerHTML = pv === 'gemini'
-        ? `<ol class="how"><li><b>Get a free key</b><span>Open <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a>, sign in with any Google account, tap <b>Create API key</b> and copy it. No card needed.</span></li><li><b>Paste it here</b><span>It’s saved only on this phone.</span></li></ol>
-           <label class="field">Google AI key<input type="password" id="ck" value="${esc(p.geminiKey || '')}" placeholder="Paste your Google AI key" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
-           <p class="fine">Free tier: there are daily limits (plenty for practice), and Google may use what you send to improve its products. The app sends only text, like your scores and what you say, never your audio.</p>`
+        ? `<div class="easy">
+             <a class="btn primary big easy-1" href="https://aistudio.google.com/apikey" target="_blank" rel="noopener"><span class="en">1</span>Get my free key from Google</a>
+             <p class="fine">Sign in with your Google account. If it asks, tick the box and tap <b>Continue</b>. Tap <b>Create API key</b>, then the <b>copy</b> button next to the key. Then come back here.</p>
+             <button class="btn primary big easy-2" data-paste><span class="en">2</span>Paste my key and connect</button>
+             <details class="fine"><summary>Paste didn’t work?</summary>Tap and hold in the box below, choose <b>Paste</b>, then tap <b>Save and test</b>.</details>
+           </div>
+           <label class="field">Google AI key<input type="password" id="ck" value="${esc(p.geminiKey || '')}" placeholder="Your key appears here" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
+           <p class="fine">Free, no card. Google may use what you send to improve its products. The app sends only text (scores, what you say), never your recordings.</p>`
         : `<ol class="how"><li><b>Get a key</b><span>Open <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">console.anthropic.com</a>, add credit under Billing, then Create Key.</span></li><li><b>Paste it here</b><span>Saved only on this phone.</span></li></ol>
            <label class="field">Anthropic API key<input type="password" id="ck" value="${esc(p.apiKey || '')}" placeholder="sk-ant-…" autocomplete="off" autocapitalize="off" spellcheck="false"></label>`;
     };
     draw();
     sh.addEventListener('click', (e) => { const b = e.target.closest('[data-pv]'); if (b) { pv = b.dataset.pv; draw(); } });
+    sh.addEventListener('click', async (e) => {
+      if (!e.target.closest('[data-paste]')) return;
+      let t = '';
+      try { t = (await navigator.clipboard.readText()) || ''; } catch (err) { t = ''; }
+      t = t.trim().replace(/^["'“”]+|["'“”]+$/g, '').replace(/\s+/g, '');
+      const inp = $('#ck', sh), out = $('#cko', sh);
+      if (t.length < 20) { out.innerHTML = '<span class="chip">Nothing to paste yet</span> Copy your key in Google first (the copy button next to it), then come back and tap step 2. Or tap and hold in the box below and choose Paste.'; inp.focus(); return; }
+      inp.value = t; $('[data-ok]', sh).click();
+    });
     $('[data-x]', sh).addEventListener('click', close);
     const rm = $('[data-rm]', sh); if (rm) rm.addEventListener('click', () => { p.apiKey = ''; p.geminiKey = ''; p.geminiModel = ''; Store.save(); close(); toast('AI coach disconnected'); });
     $('[data-ok]', sh).addEventListener('click', async () => {
